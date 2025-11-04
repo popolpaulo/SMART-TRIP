@@ -13,6 +13,20 @@ export default function TrendingDestinations({ destinations, loading }) {
     )
   }
 
+  // Vérifier si nous avons des destinations
+  if (!destinations || destinations.length === 0) {
+    return (
+      <div className="bg-gray-50 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900">Aucune destination disponible</h2>
+            <p className="text-gray-600 mt-4">Revenez bientôt pour découvrir nos destinations tendances !</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-gray-50 py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -55,7 +69,7 @@ export default function TrendingDestinations({ destinations, loading }) {
                   <div className="flex items-center space-x-1">
                     <TrendingUp className="h-4 w-4 text-accent-600" />
                     <span className="text-sm font-bold text-gray-900">
-                      {destination.trend_score?.toFixed(0)}
+                      {destination.trend_score ? Math.round(destination.trend_score) : '0'}
                     </span>
                   </div>
                 </div>
@@ -77,7 +91,7 @@ export default function TrendingDestinations({ destinations, loading }) {
                     <p className="text-sm text-gray-600 mb-1">À partir de</p>
                     <div className="flex items-baseline space-x-1">
                       <span className="text-2xl font-bold text-primary-600">
-                        {destination.average_price?.toFixed(0)}€
+                        {destination.average_price ? Math.round(destination.average_price) : '0'}€
                       </span>
                       <span className="text-sm text-gray-500">/ pers</span>
                     </div>
@@ -85,7 +99,7 @@ export default function TrendingDestinations({ destinations, loading }) {
                   <div className="text-right">
                     <p className="text-sm text-gray-600 mb-1">Recherches</p>
                     <p className="text-lg font-semibold text-gray-900">
-                      {destination.search_count?.toLocaleString()}
+                      {destination.search_count ? destination.search_count.toLocaleString() : '0'}
                     </p>
                   </div>
                 </div>
