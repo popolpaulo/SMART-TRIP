@@ -139,8 +139,8 @@ try {
     Write-Host "========================================================" -ForegroundColor Green
     Write-Host ""
     Write-Host "Services disponibles :" -ForegroundColor Cyan
-    Write-Host "   - PostgreSQL    : localhost:5432" -ForegroundColor White
-    Write-Host "   - PgAdmin       : http://localhost:5050" -ForegroundColor White
+    Write-Host "   - PostgreSQL    : localhost:5433" -ForegroundColor White
+    Write-Host "   - PgAdmin       : http://localhost:5051" -ForegroundColor White
     Write-Host ""
     Write-Host "Utilisateurs de test :" -ForegroundColor Cyan
     Write-Host "   - Email    : test@smarttrip.com" -ForegroundColor White
