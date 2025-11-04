@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Search, MapPin, Calendar, Users, Sparkles, TrendingUp, Plane } from 'lucide-react'
-import axios from 'axios'
+import { Sparkles, TrendingUp } from 'lucide-react'
+import api from '../utils/api'
 import FlightSearchForm from '../components/FlightSearchForm'
 import TrendingDestinations from '../components/TrendingDestinations'
 import FeaturesSection from '../components/FeaturesSection'
@@ -8,6 +8,7 @@ import FeaturesSection from '../components/FeaturesSection'
 export default function HomePage() {
   const [trendingDestinations, setTrendingDestinations] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchTrendingDestinations()
@@ -15,10 +16,15 @@ export default function HomePage() {
 
   const fetchTrendingDestinations = async () => {
     try {
-      const response = await axios.get('/api/search/trending')
-      setTrendingDestinations(response.data)
+      setLoading(true)
+      setError(null)
+      const response = await api.get('/api/search/trending')
+      setTrendingDestinations(response.data || [])
     } catch (error) {
       console.error('Erreur lors du chargement des destinations:', error)
+      setError(error.message)
+      // Utiliser des données de fallback en cas d'erreur
+      setTrendingDestinations([])
     } finally {
       setLoading(false)
     }
