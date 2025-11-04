@@ -33,11 +33,21 @@ C'est tout ! Le script va automatiquement :
 
 ## 🚀 Démarrer le serveur (APRÈS L'INSTALLATION)
 
-### Méthode 1 : Double-clic (le plus rapide)
+### 🎯 Option 1 : Démarrer TOUT EN 1 CLIC (Backend + Frontend + Database)
+
+**Double-cliquez sur :** `START-ALL.bat` ⭐ **RECOMMANDÉ**
+
+> Ce script démarre automatiquement :
+> - 🗄️ PostgreSQL (Docker)
+> - 📡 Backend API (port 3000)
+> - 🌐 Frontend Web (port 5173)
+> - 🔧 PgAdmin (port 5051)
+
+### Option 2 : Démarrer uniquement le Backend
 
 **Double-cliquez sur :** `START.bat`
 
-### Méthode 2 : Via VS Code
+### Option 3 : Via VS Code
 
 1. Appuyez sur `Ctrl+Shift+B` (raccourci build par défaut)
    
@@ -45,8 +55,14 @@ C'est tout ! Le script va automatiquement :
 
 2. `Ctrl+Shift+P` → `Tasks: Run Task` → **▶️ Démarrer le serveur**
 
-### Méthode 3 : Ligne de commande
+### Option 4 : Ligne de commande
 
+**Pour tout démarrer :**
+```powershell
+.\start-all.ps1
+```
+
+**Uniquement le backend :**
 ```powershell
 .\start.ps1
 ```
@@ -61,9 +77,29 @@ npm run dev
 
 ## ⏹️ Arrêter les services
 
-### Double-clic sur : `STOP.bat`
+### 🎯 Option 1 : Arrêter TOUT (Backend + Frontend + Database)
 
-**OU** via VS Code : `Tasks: Run Task` → **⏹️ Arrêter les services**
+**Double-cliquez sur :** `STOP-ALL.bat` ⭐ **RECOMMANDÉ**
+
+### Option 2 : Arrêter uniquement Docker (PostgreSQL + PgAdmin)
+
+**Double-cliquez sur :** `STOP.bat`
+
+### Option 3 : Via VS Code
+
+`Tasks: Run Task` → **⏹️ Arrêter les services**
+
+### Option 4 : Ligne de commande
+
+**Pour tout arrêter :**
+```powershell
+.\stop-all.ps1
+```
+
+**Uniquement Docker :**
+```powershell
+.\stop.ps1
+```
 
 ---
 
@@ -99,14 +135,15 @@ Appuyez sur `Ctrl+Shift+P` puis `Tasks: Run Task` :
 
 ## ✅ Vérifier que tout fonctionne
 
-Après avoir lancé `START.bat` ou la tâche **▶️ Démarrer le serveur** :
+Après avoir lancé `START-ALL.bat` :
 
 1. **Ouvrez votre navigateur :**
-   - http://localhost:3000 → API principale
-   - http://localhost:3000/health → État du serveur
-   - http://localhost:5051 → PgAdmin (interface BDD)
+   - 🌐 **http://localhost:5173** → Interface Web (Frontend) ⭐
+   - 📡 **http://localhost:3000** → API principale (Backend)
+   - ❤️ **http://localhost:3000/health** → État du serveur
+   - 🔧 **http://localhost:5051** → PgAdmin (interface BDD)
 
-2. **Testez une route :**
+2. **Testez une route API :**
    - http://localhost:3000/api/search/trending
 
 ---
