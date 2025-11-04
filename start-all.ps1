@@ -13,16 +13,48 @@ $ErrorActionPreference = "Continue"
 # Vérifier que Docker est démarré
 Write-Host "✓ Vérification de Docker..." -ForegroundColor Yellow
 try {
-    docker ps | Out-Null
+    docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw "Docker n'est pas accessible"
     }
     Write-Host "  [OK] Docker est démarré" -ForegroundColor Green
 } catch {
-    Write-Host "  [ERREUR] Docker n'est pas démarré !" -ForegroundColor Red
-    Write-Host "  Démarrage de Docker..." -ForegroundColor Yellow
-    docker-compose up -d
-    Start-Sleep -Seconds 5
+    Write-Host "  [ERREUR] Docker Desktop ne répond pas ou n'est pas démarré." -ForegroundColor Red
+    Write-Host "  ➜ Tentative de démarrage de Docker Desktop..." -ForegroundColor Yellow
+
+    $dockerExe = Join-Path $Env:ProgramFiles 'Docker\Docker\Docker Desktop.exe'
+    if (Test-Path $dockerExe) {
+        Start-Process -FilePath $dockerExe -ErrorAction SilentlyContinue | Out-Null
+    }
+
+    # Attendre jusqu'à 90s que le daemon réponde
+    $maxWait = 90
+    $elapsed = 0
+    while ($elapsed -lt $maxWait) {
+        Start-Sleep -Seconds 3
+        $elapsed += 3
+        docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0) { break }
+        Write-Host "." -NoNewline -ForegroundColor DarkCyan
+    }
+    Write-Host ""
+
+    docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  [ERREUR] Docker est indisponible. Impossible de continuer." -ForegroundColor Red
+        Write-Host "  Problème courant sur Windows : WSL non réactif (WSL is unresponsive)." -ForegroundColor Yellow
+        Write-Host ""; Write-Host "  Suivez ces étapes dans PowerShell (Administrateur) :" -ForegroundColor Cyan
+        Write-Host "    1) wsl --shutdown" -ForegroundColor White
+        Write-Host "    2) wsl --update" -ForegroundColor White
+        Write-Host "    3) dism /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart" -ForegroundColor White
+        Write-Host "    4) dism /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart" -ForegroundColor White
+        Write-Host "    5) Redémarrez Windows, puis relancez Docker Desktop" -ForegroundColor White
+        Write-Host "    6) Dans Docker Desktop → Settings → Resources → WSL integration : cochez votre distro (Ubuntu)" -ForegroundColor White
+        Write-Host ""; Write-Host "  Astuce : exécutez ensuite START-ALL.bat de nouveau." -ForegroundColor Gray
+        exit 1
+    }
+
+    Write-Host "  [OK] Docker a été démarré" -ForegroundColor Green
 }
 
 # Vérifier que PostgreSQL est démarré
