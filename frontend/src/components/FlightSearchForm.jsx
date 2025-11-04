@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, MapPin, Calendar, Users, ArrowLeftRight, Plane } from 'lucide-react'
+import { Search, MapPin, Calendar, Users, ArrowRightLeft, Plane } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export default function FlightSearchForm() {
@@ -111,7 +111,7 @@ export default function FlightSearchForm() {
               className="absolute -left-4 md:left-auto md:-translate-x-1/2 md:left-1/2 top-1/2 md:top-auto md:bottom-4 bg-white border-2 border-primary-600 rounded-full p-2 text-primary-600 hover:bg-primary-50 transition z-10"
               title="Inverser départ/arrivée"
             >
-              <ArrowLeftRight className="h-4 w-4" />
+              <ArrowRightLeft className="h-4 w-4" />
             </button>
           </div>
         </div>
