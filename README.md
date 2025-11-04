@@ -14,10 +14,39 @@ Backend Node.js/Express pour la plateforme SMART TRIP - Comparateur de vols et p
 ## 📋 Prérequis
 
 - Node.js 18+ et npm
-- PostgreSQL 15+ (ou Docker)
+- Docker Desktop
 - Git
 
-## ⚙️ Installation
+## ⚡ Installation Rapide (Recommandé)
+
+### 🎯 Setup automatique en un clic !
+
+Pour Windows, nous avons créé des scripts d'automatisation :
+
+```bash
+# 1. Installation complète (première fois)
+.\SETUP.bat
+
+# 2. Démarrer le serveur
+.\START.bat
+
+# 3. Arrêter le serveur
+.\STOP.bat
+```
+
+Le script `SETUP.bat` va automatiquement :
+- ✅ Vérifier Node.js et Docker
+- ✅ Installer les dépendances npm
+- ✅ Créer le fichier `.env`
+- ✅ Démarrer PostgreSQL et PgAdmin avec Docker
+- ✅ Créer le schéma de base de données
+- ✅ Insérer des données de test
+
+**C'est tout ! En 2 minutes, votre environnement est prêt ! 🚀**
+
+---
+
+## ⚙️ Installation Manuelle
 
 ### 1. Cloner le repository
 
@@ -260,6 +289,24 @@ Utilisez PgAdmin à l'adresse http://localhost:5051 :
 
 ## 🔧 Commandes utiles
 
+### Scripts Windows (Automatisés)
+
+```bash
+# Installation complète
+.\SETUP.bat
+
+# Démarrer l'environnement
+.\START.bat
+
+# Arrêter l'environnement
+.\STOP.bat
+
+# Réinitialiser la base de données
+.\RESET.bat
+```
+
+### Commandes npm
+
 ```bash
 # Installer les dépendances
 npm install
@@ -275,7 +322,11 @@ npm run db:migrate
 
 # Insérer des données de test
 npm run db:seed
+```
 
+### Commandes Docker
+
+```bash
 # Voir les logs Docker
 docker-compose logs -f
 
