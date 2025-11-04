@@ -104,7 +104,7 @@ Après avoir lancé `START.bat` ou la tâche **▶️ Démarrer le serveur** :
 1. **Ouvrez votre navigateur :**
    - http://localhost:3000 → API principale
    - http://localhost:3000/health → État du serveur
-   - http://localhost:5050 → PgAdmin (interface BDD)
+   - http://localhost:5051 → PgAdmin (interface BDD)
 
 2. **Testez une route :**
    - http://localhost:3000/api/search/trending

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const db = require('./connection');
 const logger = require('../utils/logger');
 const bcrypt = require('bcrypt');

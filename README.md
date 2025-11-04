@@ -53,11 +53,11 @@ docker-compose up -d
 ```
 
 Cela démarre :
-- PostgreSQL sur le port `5432`
-- PgAdmin (interface web) sur `http://localhost:5050`
+- PostgreSQL sur le port `5433`
+- PgAdmin (interface web) sur `http://localhost:5051`
 
 **Accès PgAdmin** :
-- URL: http://localhost:5050
+- URL: http://localhost:5051
 - Email: admin@smarttrip.com
 - Mot de passe: admin
 
@@ -247,13 +247,13 @@ git push origin feature/nom-fonctionnalite
 
 ### Visualiser la base de données
 
-Utilisez PgAdmin à l'adresse http://localhost:5050 :
+Utilisez PgAdmin à l'adresse http://localhost:5051 :
 
 1. Connectez-vous avec les identifiants
 2. Ajoutez un nouveau serveur :
    - Name: SMART TRIP
    - Host: postgres (ou localhost si PgAdmin n'est pas dans Docker)
-   - Port: 5432
+   - Port: 5433
    - Database: smarttrip_dev
    - Username: smarttrip_user
    - Password: smarttrip_password

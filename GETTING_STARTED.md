@@ -85,13 +85,13 @@ Invoke-WebRequest -Uri http://localhost:3000/api/search/trending -Method GET
 
 ### Via PgAdmin (Interface graphique)
 
-1. Ouvrez http://localhost:5050
+1. Ouvrez http://localhost:5051
 2. Connectez-vous :
    - Email: `admin@smarttrip.com`
    - Password: `admin`
 3. Ajoutez un serveur :
    - Host: `postgres` (ou `localhost` si PgAdmin local)
-   - Port: `5432`
+   - Port: `5433`
    - Database: `smarttrip_dev`
    - Username: `smarttrip_user`
    - Password: `smarttrip_password`
@@ -210,7 +210,7 @@ docker-compose down
 
 **Q: La base de données ne démarre pas ?**
 - Vérifiez que Docker Desktop est lancé
-- Vérifiez que le port 5432 n'est pas déjà utilisé
+- Vérifiez que le port 5433 n'est pas déjà utilisé
 - Consultez les logs : `docker-compose logs postgres`
 
 **Q: Erreur "Cannot find module" ?**
