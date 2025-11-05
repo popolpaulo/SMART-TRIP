@@ -7,6 +7,7 @@
 **Double-cliquez sur :** `SETUP.bat`
 
 C'est tout ! Le script va automatiquement :
+
 1. ✅ Vérifier Node.js et Docker
 2. ✅ Installer les dépendances npm
 3. ✅ Démarrer PostgreSQL avec Docker
@@ -38,6 +39,7 @@ C'est tout ! Le script va automatiquement :
 **Double-cliquez sur :** `START-ALL.bat` ⭐ **RECOMMANDÉ**
 
 > Ce script démarre automatiquement :
+>
 > - 🗄️ PostgreSQL (Docker)
 > - 📡 Backend API (port 3000)
 > - 🌐 Frontend Web (port 5173)
@@ -50,7 +52,7 @@ C'est tout ! Le script va automatiquement :
 ### Option 3 : Via VS Code
 
 1. Appuyez sur `Ctrl+Shift+B` (raccourci build par défaut)
-   
+
    **OU**
 
 2. `Ctrl+Shift+P` → `Tasks: Run Task` → **▶️ Démarrer le serveur**
@@ -58,11 +60,13 @@ C'est tout ! Le script va automatiquement :
 ### Option 4 : Ligne de commande
 
 **Pour tout démarrer :**
+
 ```powershell
 .\start-all.ps1
 ```
 
 **Uniquement le backend :**
+
 ```powershell
 .\start.ps1
 ```
@@ -92,11 +96,13 @@ npm run dev
 ### Option 4 : Ligne de commande
 
 **Pour tout arrêter :**
+
 ```powershell
 .\stop-all.ps1
 ```
 
 **Uniquement Docker :**
+
 ```powershell
 .\stop.ps1
 ```
@@ -119,17 +125,17 @@ Puis relancez `SETUP.bat`
 
 Appuyez sur `Ctrl+Shift+P` puis `Tasks: Run Task` :
 
-| Tâche | Description |
-|-------|-------------|
-| 🚀 Setup complet | Installation complète (1ère fois) |
-| ▶️ Démarrer le serveur | Lance le serveur en mode dev |
-| ⏹️ Arrêter les services | Arrête Docker et le serveur |
-| 🔄 Réinitialiser | Remet à zéro l'environnement |
-| 📦 Installer dépendances | npm install |
-| 🐳 Démarrer Docker | docker-compose up -d |
-| 🗄️ Créer les tables | Migration de la BDD |
-| 🌱 Données de test | Seed de la BDD |
-| 📊 Logs Docker | Voir les logs en temps réel |
+| Tâche                    | Description                       |
+| ------------------------ | --------------------------------- |
+| 🚀 Setup complet         | Installation complète (1ère fois) |
+| ▶️ Démarrer le serveur   | Lance le serveur en mode dev      |
+| ⏹️ Arrêter les services  | Arrête Docker et le serveur       |
+| 🔄 Réinitialiser         | Remet à zéro l'environnement      |
+| 📦 Installer dépendances | npm install                       |
+| 🐳 Démarrer Docker       | docker-compose up -d              |
+| 🗄️ Créer les tables      | Migration de la BDD               |
+| 🌱 Données de test       | Seed de la BDD                    |
+| 📊 Logs Docker           | Voir les logs en temps réel       |
 
 ---
 
@@ -138,6 +144,7 @@ Appuyez sur `Ctrl+Shift+P` puis `Tasks: Run Task` :
 Après avoir lancé `START-ALL.bat` :
 
 1. **Ouvrez votre navigateur :**
+
    - 🌐 **http://localhost:5173** → Interface Web (Frontend) ⭐
    - 📡 **http://localhost:3000** → API principale (Backend)
    - ❤️ **http://localhost:3000/health** → État du serveur
@@ -160,26 +167,30 @@ Après avoir lancé `START-ALL.bat` :
 
 Après le setup, ces utilisateurs sont disponibles :
 
-| Email | Password |
-|-------|----------|
-| test@smarttrip.com | Test123! |
+| Email               | Password |
+| ------------------- | -------- |
+| test@smarttrip.com  | Test123! |
 | marie@smarttrip.com | Test123! |
-| paul@smarttrip.com | Test123! |
+| paul@smarttrip.com  | Test123! |
 
 ---
 
 ## 🆘 Problèmes courants
 
 ### "Docker n'est pas démarré"
+
 → Lancez Docker Desktop manuellement
 
 ### "Le port 3000 est déjà utilisé"
+
 → Modifiez `PORT=3001` dans le fichier `.env`
 
 ### "Erreur de connexion à PostgreSQL"
+
 → Attendez quelques secondes que PostgreSQL démarre, puis réessayez
 
 ### Tout réinitialiser
+
 ```powershell
 .\reset.ps1
 .\setup.ps1
