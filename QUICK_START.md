@@ -196,10 +196,10 @@ Après le setup, ces utilisateurs sont disponibles :
 
 ---
 
-## 📚 Documentation complète
+## 📚 Documentation utile
 
 - **README.md** : Documentation technique détaillée
-- **GETTING_STARTED.md** : Guide complet pas à pas
+- **TEST_API.md** : Exemples prêts à l'emploi pour tester l'API
 
 ---
 

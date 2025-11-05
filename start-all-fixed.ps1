@@ -13,50 +13,16 @@ $ErrorActionPreference = "Continue"
 # Verifier que Docker est demarre
 Write-Host "Verification de Docker..." -ForegroundColor Yellow
 try {
-    docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
+    docker ps | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw "Docker n'est pas accessible"
     }
     Write-Host "  [OK] Docker est demarre" -ForegroundColor Green
 } catch {
-    Write-Host "  [ERREUR] Docker Desktop ne repond pas ou n'est pas demarre." -ForegroundColor Red
-    Write-Host "  Tentative de demarrage de Docker Desktop..." -ForegroundColor Yellow
-
-    $dockerExe = Join-Path $Env:ProgramFiles 'Docker\Docker\Docker Desktop.exe'
-    if (Test-Path $dockerExe) {
-        Start-Process -FilePath $dockerExe -ErrorAction SilentlyContinue | Out-Null
-    }
-
-    # Attendre jusqua 90s que le daemon reponde
-    $maxWait = 90
-    $elapsed = 0
-    while ($elapsed -lt $maxWait) {
-        Start-Sleep -Seconds 3
-        $elapsed += 3
-        docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
-        if ($LASTEXITCODE -eq 0) { break }
-        Write-Host "." -NoNewline -ForegroundColor DarkCyan
-    }
-    Write-Host ""
-
-    docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "  [ERREUR] Docker est indisponible. Impossible de continuer." -ForegroundColor Red
-        Write-Host "  Probleme courant sur Windows : WSL non reactif (WSL is unresponsive)." -ForegroundColor Yellow
-        Write-Host ""
-        Write-Host "  Suivez ces etapes dans PowerShell (Administrateur) :" -ForegroundColor Cyan
-        Write-Host "    1) wsl --shutdown" -ForegroundColor White
-        Write-Host "    2) wsl --update" -ForegroundColor White
-        Write-Host "    3) dism /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart" -ForegroundColor White
-        Write-Host "    4) dism /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart" -ForegroundColor White
-        Write-Host "    5) Redemarrez Windows, puis relancez Docker Desktop" -ForegroundColor White
-        Write-Host "    6) Dans Docker Desktop -> Settings -> Resources -> WSL integration : cochez votre distro (Ubuntu)" -ForegroundColor White
-        Write-Host ""
-        Write-Host "  Astuce : executez ensuite START-ALL.bat de nouveau." -ForegroundColor Gray
-        exit 1
-    }
-
-    Write-Host "  [OK] Docker a ete demarre" -ForegroundColor Green
+    Write-Host "  [ERREUR] Docker n'est pas demarre !" -ForegroundColor Red
+    Write-Host "  Demarrage de Docker..." -ForegroundColor Yellow
+    docker-compose up -d
+    Start-Sleep -Seconds 5
 }
 
 # Verifier que PostgreSQL est demarre
@@ -97,7 +63,7 @@ Write-Host "============================================================" -Foreg
 Write-Host ""
 
 # Creer un job pour le backend
-Write-Host "-> Demarrage du Backend..." -ForegroundColor Cyan
+Write-Host "Demarrage du Backend..." -ForegroundColor Cyan
 $backendJob = Start-Job -ScriptBlock {
     Set-Location $using:PWD
     npm run dev
@@ -108,7 +74,7 @@ Write-Host "  [OK] Backend demarre (Job ID: $($backendJob.Id))" -ForegroundColor
 Start-Sleep -Seconds 3
 
 # Creer un job pour le frontend
-Write-Host "-> Demarrage du Frontend..." -ForegroundColor Cyan
+Write-Host "Demarrage du Frontend..." -ForegroundColor Cyan
 $frontendJob = Start-Job -ScriptBlock {
     Set-Location "$using:PWD\frontend"
     npm run dev
@@ -120,17 +86,13 @@ Write-Host "============================================================" -Foreg
 Write-Host "   SMART TRIP est maintenant en cours d'execution !" -ForegroundColor Magenta
 Write-Host "============================================================" -ForegroundColor Magenta
 Write-Host ""
-Write-Host "  Backend API     : " -NoNewline -ForegroundColor White
-Write-Host "http://localhost:3000" -ForegroundColor Green
-Write-Host "  Frontend Web    : " -NoNewline -ForegroundColor White
-Write-Host "http://localhost:5173" -ForegroundColor Green
-Write-Host "  PostgreSQL     : " -NoNewline -ForegroundColor White
-Write-Host "localhost:5433" -ForegroundColor Green
-Write-Host "  PgAdmin         : " -NoNewline -ForegroundColor White
-Write-Host "http://localhost:5051" -ForegroundColor Green
+Write-Host "  Backend API     : http://localhost:3000" -ForegroundColor Green
+Write-Host "  Frontend Web    : http://localhost:5173" -ForegroundColor Green
+Write-Host "  PostgreSQL      : localhost:5433" -ForegroundColor Green
+Write-Host "  PgAdmin         : http://localhost:5051" -ForegroundColor Green
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Yellow
-Write-Host "  ATTENTION: Appuyez sur Ctrl+C pour arreter tous les serveurs" -ForegroundColor Yellow
+Write-Host "  Appuyez sur Ctrl+C pour arreter tous les serveurs" -ForegroundColor Yellow
 Write-Host "============================================================" -ForegroundColor Yellow
 Write-Host ""
 
@@ -163,7 +125,7 @@ try {
 
 # Boucle infinie pour afficher les logs des deux serveurs
 Write-Host "Logs en temps reel :" -ForegroundColor Cyan
-Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
+Write-Host "================================================================" -ForegroundColor DarkGray
 Write-Host ""
 
 try {
@@ -186,7 +148,7 @@ try {
             }
         }
         
-    # Verifier si les jobs sont toujours en cours
+        # Verifier si les jobs sont toujours en cours
         if ($backendJob.State -eq "Failed" -or $backendJob.State -eq "Stopped") {
             Write-Host "`n[ERREUR] Le backend s'est arrete !" -ForegroundColor Red
             break
