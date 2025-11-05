@@ -11,8 +11,10 @@ import {
   Zap,
   Award,
   AlertCircle,
+  ExternalLink,
 } from "lucide-react";
 import { searchFlights } from "../utils/api";
+import { getAirlineInfo, generateBookingLink } from "../utils/airlines";
 import PricePredictionCard from "../components/PricePredictionCard";
 
 export default function SearchResultsPage() {
@@ -359,11 +361,18 @@ export default function SearchResultsPage() {
             </div>
 
             {displayFlights.map((flight, index) => {
-              const carrier =
+              const carrierCode =
                 flight.carrierIds?.[0] ||
                 flight.validatingAirlineCodes?.[0] ||
                 flight.airline ||
-                "N/A";
+                "AF";
+              const airlineInfo = getAirlineInfo(carrierCode);
+              const bookingLink = generateBookingLink(flight, {
+                origin: originCode,
+                destination: destinationCode,
+                departureDate,
+                returnDate,
+              });
               const recommendation =
                 flight.aiRecommendation?.level || "acceptable";
               const badge = getRecommendationBadge(recommendation);
@@ -402,14 +411,17 @@ export default function SearchResultsPage() {
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center space-x-4">
                             <div className="text-3xl">
-                              {flight.logo || "✈️"}
+                              {airlineInfo?.logo || "✈️"}
                             </div>
                             <div>
                               <div className="font-semibold text-lg">
-                                {carrier}
+                                {airlineInfo?.name || carrierCode}
                               </div>
-                              <div className="text-sm text-gray-600 capitalize">
-                                {flight.class || cabinClass}
+                              <div className="text-sm text-gray-500">
+                                {airlineInfo?.code || carrierCode} •{" "}
+                                <span className="capitalize">
+                                  {flight.class || cabinClass}
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -545,9 +557,15 @@ export default function SearchResultsPage() {
                             </div>
                           )}
                         </div>
-                        <button className="btn btn-primary whitespace-nowrap">
-                          Sélectionner
-                        </button>
+                        <a
+                          href={bookingLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-primary whitespace-nowrap inline-flex items-center space-x-2 hover:scale-105 transition-transform"
+                        >
+                          <span>Sélectionner</span>
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
                       </div>
                     </div>
                   </div>

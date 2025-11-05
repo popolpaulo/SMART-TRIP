@@ -21,6 +21,7 @@ git pull origin main
 👉 **Double-clique sur `REPAIR-DEPENDENCIES.bat`**
 
 Le script va :
+
 - ✅ Arrêter les processus Node.js en cours
 - ✅ Supprimer les modules corrompus
 - ✅ Réinstaller proprement **toutes** les dépendances (2-3 minutes)
@@ -42,7 +43,7 @@ Réparation des dépendances Backend...
 
   Réinstallation complète des dépendances...
   (Cela peut prendre 2-3 minutes)
-  
+
   [OK] Dépendances Backend réparées avec succès !
 
 Réparation des dépendances Frontend...
@@ -88,10 +89,12 @@ ETAPE 4/5: Démarrage du serveur Backend (Node.js)
 ## 🔍 Pourquoi ce problème ?
 
 Ton `node_modules` existait mais était **incomplet** :
+
 - Le dossier était là → Le script pensait que tout était installé
 - Mais le module `openai` (et peut-être d'autres) manquaient → Crash au démarrage
 
 Maintenant, le script vérifie **les modules critiques** avant de dire "OK" :
+
 - Backend : `openai`, `express`, `pg`, `cors`, `dotenv`, `bcryptjs`, `jsonwebtoken`, `winston`
 - Frontend : `react`, `vite`, `react-router-dom`, `axios`, `lucide-react`
 
@@ -105,7 +108,7 @@ Le `start-all.ps1` version 2.1 vérifie maintenant :
 # Ancien comportement
 if node_modules existe → [OK] déjà installées
 
-# Nouveau comportement  
+# Nouveau comportement
 if node_modules existe:
     for chaque module critique:
         if module manquant → npm install
@@ -124,10 +127,10 @@ Et envoie-moi la sortie complète, je verrai exactement ce qui manque.
 
 Tu as maintenant **3 outils de diagnostic/réparation** :
 
-| Fichier | Quand l'utiliser |
-|---------|------------------|
-| **CHECK-SETUP.bat** | Diagnostic de ta config (30 secondes) |
+| Fichier                     | Quand l'utiliser                           |
+| --------------------------- | ------------------------------------------ |
+| **CHECK-SETUP.bat**         | Diagnostic de ta config (30 secondes)      |
 | **REPAIR-DEPENDENCIES.bat** | Si erreur "Cannot find module" (3 minutes) |
-| **START-ALL.bat** | Démarrage normal de l'app |
+| **START-ALL.bat**           | Démarrage normal de l'app                  |
 
 **Dis-moi si ça marche ! 🚀**
