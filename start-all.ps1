@@ -42,15 +42,17 @@ try {
     docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Write-Host "  [ERREUR] Docker est indisponible. Impossible de continuer." -ForegroundColor Red
-        Write-Host "  Problème courant sur Windows : WSL non réactif (WSL is unresponsive)." -ForegroundColor Yellow
-        Write-Host ""; Write-Host "  Suivez ces étapes dans PowerShell (Administrateur) :" -ForegroundColor Cyan
+        Write-Host "  Probleme courant sur Windows : WSL non reactif (WSL is unresponsive)." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "  Suivez ces etapes dans PowerShell (Administrateur) :" -ForegroundColor Cyan
         Write-Host "    1) wsl --shutdown" -ForegroundColor White
         Write-Host "    2) wsl --update" -ForegroundColor White
         Write-Host "    3) dism /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart" -ForegroundColor White
         Write-Host "    4) dism /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart" -ForegroundColor White
-        Write-Host "    5) Redémarrez Windows, puis relancez Docker Desktop" -ForegroundColor White
-        Write-Host "    6) Dans Docker Desktop → Settings → Resources → WSL integration : cochez votre distro (Ubuntu)" -ForegroundColor White
-        Write-Host ""; Write-Host "  Astuce : exécutez ensuite START-ALL.bat de nouveau." -ForegroundColor Gray
+        Write-Host "    5) Redemarrez Windows, puis relancez Docker Desktop" -ForegroundColor White
+        Write-Host "    6) Dans Docker Desktop -> Settings -> Resources -> WSL integration : cochez votre distro (Ubuntu)" -ForegroundColor White
+        Write-Host ""
+        Write-Host "  Astuce : executez ensuite START-ALL.bat de nouveau." -ForegroundColor Gray
         exit 1
     }
 
@@ -95,7 +97,7 @@ Write-Host "============================================================" -Foreg
 Write-Host ""
 
 # Créer un job pour le backend
-Write-Host "➜ Démarrage du Backend..." -ForegroundColor Cyan
+Write-Host "-> Demarrage du Backend..." -ForegroundColor Cyan
 $backendJob = Start-Job -ScriptBlock {
     Set-Location $using:PWD
     npm run dev
@@ -106,7 +108,7 @@ Write-Host "  [OK] Backend démarré (Job ID: $($backendJob.Id))" -ForegroundCol
 Start-Sleep -Seconds 3
 
 # Créer un job pour le frontend
-Write-Host "➜ Démarrage du Frontend..." -ForegroundColor Cyan
+Write-Host "-> Demarrage du Frontend..." -ForegroundColor Cyan
 $frontendJob = Start-Job -ScriptBlock {
     Set-Location "$using:PWD\frontend"
     npm run dev
@@ -115,20 +117,20 @@ Write-Host "  [OK] Frontend démarré (Job ID: $($frontendJob.Id))" -ForegroundC
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Magenta
-Write-Host "   🚀 SMART TRIP est maintenant en cours d'exécution !" -ForegroundColor Magenta
+Write-Host "   SMART TRIP est maintenant en cours d'execution !" -ForegroundColor Magenta
 Write-Host "============================================================" -ForegroundColor Magenta
 Write-Host ""
-Write-Host "  📡 Backend API     : " -NoNewline -ForegroundColor White
+Write-Host "  Backend API     : " -NoNewline -ForegroundColor White
 Write-Host "http://localhost:3000" -ForegroundColor Green
-Write-Host "  🌐 Frontend Web    : " -NoNewline -ForegroundColor White
+Write-Host "  Frontend Web    : " -NoNewline -ForegroundColor White
 Write-Host "http://localhost:5173" -ForegroundColor Green
-Write-Host "  🗄️  PostgreSQL     : " -NoNewline -ForegroundColor White
+Write-Host "  PostgreSQL     : " -NoNewline -ForegroundColor White
 Write-Host "localhost:5433" -ForegroundColor Green
-Write-Host "  🔧 PgAdmin         : " -NoNewline -ForegroundColor White
+Write-Host "  PgAdmin         : " -NoNewline -ForegroundColor White
 Write-Host "http://localhost:5051" -ForegroundColor Green
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Yellow
-Write-Host "  ⚠️  Appuyez sur Ctrl+C pour arrêter tous les serveurs" -ForegroundColor Yellow
+Write-Host "  ATTENTION: Appuyez sur Ctrl+C pour arreter tous les serveurs" -ForegroundColor Yellow
 Write-Host "============================================================" -ForegroundColor Yellow
 Write-Host ""
 
@@ -160,8 +162,8 @@ try {
 }
 
 # Boucle infinie pour afficher les logs des deux serveurs
-Write-Host "📋 Logs en temps réel :" -ForegroundColor Cyan
-Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
+Write-Host "Logs en temps reel :" -ForegroundColor Cyan
+Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
 Write-Host ""
 
 try {
