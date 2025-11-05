@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "db:migrate": "node src/database/migrate.js",
     "db:seed": "node src/database/seed.js",
+    "prices:update": "node update-trending-prices.js",
     "test": "jest"
   },
   "keywords": [

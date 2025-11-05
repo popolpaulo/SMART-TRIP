@@ -127,6 +127,20 @@ npm run db:migrate
 npm run db:seed
 ```
 
+### 6.5. ⭐ **NOUVEAU** - Mettre à jour les prix réels des destinations
+
+**IMPORTANT** : Par défaut, les prix des "Destinations populaires" sont statiques (hardcodés).
+
+Pour afficher les **vrais prix** depuis l'API Amadeus :
+
+```bash
+npm run prices:update
+```
+
+Cela met à jour les prix pour Paris, Tokyo, New York, etc. avec les **données réelles du marché**.
+
+📖 **Guide détaillé** : Voir `PRIX_REELS_GUIDE_RAPIDE.md`
+
 ### 7. Démarrer le serveur
 
 **Mode développement** (avec rechargement automatique) :

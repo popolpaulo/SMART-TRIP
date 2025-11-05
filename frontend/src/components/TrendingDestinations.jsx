@@ -1,4 +1,4 @@
-import { TrendingUp, MapPin, DollarSign } from 'lucide-react'
+import { TrendingUp, MapPin, DollarSign } from "lucide-react";
 
 export default function TrendingDestinations({ destinations, loading }) {
   if (loading) {
@@ -10,7 +10,7 @@ export default function TrendingDestinations({ destinations, loading }) {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   // Vérifier si nous avons des destinations
@@ -19,12 +19,16 @@ export default function TrendingDestinations({ destinations, loading }) {
       <div className="bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900">Aucune destination disponible</h2>
-            <p className="text-gray-600 mt-4">Revenez bientôt pour découvrir nos destinations tendances !</p>
+            <h2 className="text-3xl font-bold text-gray-900">
+              Aucune destination disponible
+            </h2>
+            <p className="text-gray-600 mt-4">
+              Revenez bientôt pour découvrir nos destinations tendances !
+            </p>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -58,25 +62,29 @@ export default function TrendingDestinations({ destinations, loading }) {
                   alt={destination.city}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   onError={(e) => {
-                    e.target.src = `https://source.unsplash.com/800x600/?${destination.city},travel`
+                    e.target.src = `https://source.unsplash.com/800x600/?${destination.city},travel`;
                   }}
                 />
                 {/* Overlay gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-                
+
                 {/* Badge score */}
                 <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full shadow-lg">
                   <div className="flex items-center space-x-1">
                     <TrendingUp className="h-4 w-4 text-accent-600" />
                     <span className="text-sm font-bold text-gray-900">
-                      {destination.trend_score ? Math.round(destination.trend_score) : '0'}
+                      {destination.trend_score
+                        ? Math.round(destination.trend_score)
+                        : "0"}
                     </span>
                   </div>
                 </div>
 
                 {/* Ville et pays */}
                 <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="text-2xl font-bold mb-1">{destination.city}</h3>
+                  <h3 className="text-2xl font-bold mb-1">
+                    {destination.city}
+                  </h3>
                   <div className="flex items-center space-x-1 text-sm">
                     <MapPin className="h-4 w-4" />
                     <span>{destination.country_name}</span>
@@ -91,15 +99,28 @@ export default function TrendingDestinations({ destinations, loading }) {
                     <p className="text-sm text-gray-600 mb-1">À partir de</p>
                     <div className="flex items-baseline space-x-1">
                       <span className="text-2xl font-bold text-primary-600">
-                        {destination.average_price ? Math.round(destination.average_price) : '0'}€
+                        {destination.min_price || destination.average_price
+                          ? Math.round(
+                              destination.min_price || destination.average_price
+                            )
+                          : "0"}
+                        €
                       </span>
                       <span className="text-sm text-gray-500">/ pers</span>
                     </div>
+                    {/* Afficher disclaimer si prix non mis à jour */}
+                    {!destination.min_price && destination.average_price && (
+                      <p className="text-xs text-amber-600 mt-1">
+                        Prix indicatif
+                      </p>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-gray-600 mb-1">Recherches</p>
                     <p className="text-lg font-semibold text-gray-900">
-                      {destination.search_count ? destination.search_count.toLocaleString() : '0'}
+                      {destination.search_count
+                        ? destination.search_count.toLocaleString()
+                        : "0"}
                     </p>
                   </div>
                 </div>
@@ -127,5 +148,5 @@ export default function TrendingDestinations({ destinations, loading }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
