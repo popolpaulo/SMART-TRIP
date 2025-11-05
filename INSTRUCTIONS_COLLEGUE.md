@@ -115,18 +115,34 @@ Si Docker affiche "WSL is unresponsive" :
 3. Redémarre **Docker Desktop**
 4. Relance **START-ALL.bat**
 
-### Erreur "Cannot find module 'openai'"
+### Erreur "Cannot find module 'openai'" ⚠️ IMPORTANT
 
-Ça veut dire que les dépendances ne sont pas installées. Avec la **nouvelle version du script**, ce problème ne devrait plus arriver car il fait `npm install` automatiquement.
+**C'est exactement ton problème !**
 
-Si ça persiste, installe manuellement :
+Ça veut dire que `node_modules` existe mais que certains modules critiques sont **manquants ou corrompus**.
+
+**SOLUTION RAPIDE (2 clics) :**
+
+1. **Ferme toutes les fenêtres PowerShell/CMD**
+2. **Double-clique sur `REPAIR-DEPENDENCIES.bat`** (NOUVEAU fichier !)
+3. Attends 3-5 minutes (il va tout réinstaller proprement)
+4. Relance **START-ALL.bat**
+
+**OU solution manuelle :**
 
 ```powershell
 # Dans le dossier SMART-TRIP
+# 1. Supprimer node_modules
+Remove-Item -Path node_modules -Recurse -Force
+Remove-Item -Path package-lock.json -Force
+
+# 2. Reinstaller
 npm install
 
-# Dans le dossier frontend
+# 3. Faire pareil pour le frontend
 cd frontend
+Remove-Item -Path node_modules -Recurse -Force
+Remove-Item -Path package-lock.json -Force
 npm install
 cd ..
 ```

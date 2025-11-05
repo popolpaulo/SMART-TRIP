@@ -76,19 +76,48 @@ function Install-NpmDependencies {
     
     Push-Location $path
     
+    $needsInstall = $false
+    
+    # Verifier si node_modules existe
     if (-not (Test-Path "node_modules")) {
+        $needsInstall = $true
+        Write-Host "  node_modules manquant - installation requise" -ForegroundColor Yellow
+    } else {
+        # Verifier l'integrite des modules critiques
+        if ($name -eq "Backend") {
+            $criticalModules = @("openai", "express", "pg", "cors", "dotenv")
+        } else {
+            $criticalModules = @("react", "vite", "react-router-dom")
+        }
+        
+        foreach ($module in $criticalModules) {
+            if (-not (Test-Path "node_modules\$module")) {
+                Write-Host "  [ATTENTION] Module critique '$module' manquant !" -ForegroundColor Yellow
+                $needsInstall = $true
+                break
+            }
+        }
+        
+        if (-not $needsInstall) {
+            Write-Host "  [OK] Dependances $name deja installees" -ForegroundColor Green
+        }
+    }
+    
+    # Installer ou reparer les dependances
+    if ($needsInstall) {
         Write-Host "  Installation des dependances $name..." -ForegroundColor Cyan
+        Write-Host "  (Cela peut prendre 2-3 minutes, patientez...)" -ForegroundColor Gray
+        
         npm install --loglevel=error
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  [OK] Dependances $name installees" -ForegroundColor Green
         } else {
             Write-Host "  [ERREUR] Echec d'installation des dependances $name" -ForegroundColor Red
+            Write-Host "  Essayez manuellement: cd $path && npm install" -ForegroundColor Yellow
             Pop-Location
             return $false
         }
-    } else {
-        Write-Host "  [OK] Dependances $name deja installees" -ForegroundColor Green
     }
     
     Pop-Location

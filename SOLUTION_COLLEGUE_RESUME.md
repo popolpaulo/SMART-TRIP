@@ -7,7 +7,7 @@ D'après les logs, voici ce qui s'est passé :
 ### ❌ Erreurs Identifiées
 
 1. **Ancienne version du script** : Il a lancé une version sans auto-installation
-2. **Modules npm manquants** : 
+2. **Modules npm manquants** :
    - Backend : `Cannot find module 'openai'`
    - Frontend : `Could not read package.json`
 3. **Chemin avec espaces** : `C:\Users\tgrnr\Documents\ESME\JavaScript Project\SMART-TRIP`
@@ -20,7 +20,8 @@ J'ai créé **3 outils** pour ton collègue :
 
 ## 🛠️ Outils Disponibles
 
-### 1. **CHECK-SETUP.bat** (NOUVEAU !) 
+### 1. **CHECK-SETUP.bat** (NOUVEAU !)
+
 👉 **À lancer EN PREMIER pour diagnostic**
 
 ```
@@ -28,6 +29,7 @@ Double-clic sur CHECK-SETUP.bat
 ```
 
 **Ce qu'il fait :**
+
 - ✅ Vérifie que le script `start-all.ps1` est en version 2.0
 - ✅ Vérifie si Git est à jour avec `origin/main`
 - ✅ Vérifie Node.js et npm
@@ -38,6 +40,7 @@ Double-clic sur CHECK-SETUP.bat
 - ✅ Affiche un **résumé clair** avec actions à faire
 
 **Résultat attendu :**
+
 ```
 ============================================================
    RESUME ET ACTIONS RECOMMANDEES
@@ -54,9 +57,11 @@ SOLUTION AUTOMATIQUE:
 ```
 
 ### 2. **INSTRUCTIONS_COLLEGUE.md**
+
 📖 **Guide complet étape par étape**
 
 **Contenu :**
+
 - Diagnostic rapide avec `CHECK-SETUP.bat`
 - Comment faire `git pull origin main`
 - Comment vérifier la version du script (ligne 5 : `Version: 2.0`)
@@ -66,9 +71,11 @@ SOLUTION AUTOMATIQUE:
 - Checklist de validation finale
 
 ### 3. **start-all.ps1 Version 2.0** (Déjà commité)
+
 🚀 **Script de démarrage robuste avec auto-installation**
 
 **Nouvelles fonctionnalités :**
+
 - ✅ Détecte et installe Node.js automatiquement
 - ✅ Détecte `node_modules` manquant et lance `npm install` auto
 - ✅ Gère les chemins avec espaces correctement
@@ -91,16 +98,19 @@ J'ai poussé des correctifs sur GitHub qui vont résoudre tous tes problèmes de
 1. **Ouvre PowerShell** dans ton dossier `SMART-TRIP`
 
 2. **Récupère la dernière version** :
+
    ```powershell
    git pull origin main
    ```
 
 3. **Lance le diagnostic** :
+
    - Double-clic sur `CHECK-SETUP.bat`
    - Lis le résumé à la fin
    - Prends une capture d'écran si besoin
 
 4. **Démarre l'application** :
+
    - Double-clic sur `START-ALL.bat`
    - **Laisse tourner 2-3 minutes** (installation des modules)
    - Ne ferme PAS la fenêtre pendant l'installation
@@ -110,11 +120,13 @@ J'ai poussé des correctifs sur GitHub qui vont résoudre tous tes problèmes de
    - Teste une recherche de vol
 
 **Si problème Docker :**
+
 - Ouvre Docker Desktop manuellement
 - Attends qu'il soit démarré (icône verte)
 - Relance `START-ALL.bat`
 
 **Si problème WSL (Windows Subsystem for Linux) :**
+
 - Ouvre PowerShell **en Administrateur**
 - Tape : `wsl --shutdown`
 - Tape : `wsl --update`
@@ -132,10 +144,12 @@ Pour plus de détails, lis `INSTRUCTIONS_COLLEGUE.md` 📖
 Voici ce qui a été poussé :
 
 ### Commit 1 : `c4377bc` - Script robuste
+
 - `start-all.ps1` version 2.0 (auto-installation)
 - `STARTUP_SCRIPT_IMPROVEMENTS.md` (documentation technique)
 
 ### Commit 2 : `a48d16f` - Outils de diagnostic
+
 - `CHECK-SETUP.bat` + `check-setup.ps1` (diagnostic)
 - `INSTRUCTIONS_COLLEGUE.md` (guide utilisateur)
 
@@ -149,6 +163,7 @@ Avec ces outils, ton collègue peut :
 4. **Résoudre** les problèmes avec le guide (`INSTRUCTIONS_COLLEGUE.md`)
 
 **Même avec :**
+
 - ❌ Chemin avec espaces
 - ❌ Modules npm manquants
 - ❌ Docker non démarré

@@ -22,11 +22,13 @@
 | **STOP-ALL.bat** ⭐ | **Arrête TOUT** | Backend + Frontend + Database |
 | STOP.bat | Arrête Docker uniquement | Database (PostgreSQL + PgAdmin) |
 
-### 🔧 Installation
+### 🔧 Installation et Maintenance
 
 | Fichier | Description | Quand l'utiliser |
 |---------|-------------|------------------|
 | SETUP.bat | Installation complète | Première fois ou après un reset |
+| **REPAIR-DEPENDENCIES.bat** 🆕 | Répare les modules npm | Si erreur "Cannot find module" |
+| CHECK-SETUP.bat 🆕 | Diagnostic de configuration | Avant de demander de l'aide |
 | reset.ps1 | Réinitialisation totale | Pour repartir de zéro |
 
 ---
@@ -143,8 +145,15 @@ Mais c'est **moins pratique** que START-ALL.bat ! 😉
 ### "Port déjà utilisé"
 → Lance `STOP-ALL.bat` d'abord
 
+### ⚠️ "Cannot find module 'openai'" ou autre module
+→ **Double-clique sur `REPAIR-DEPENDENCIES.bat`** (2-3 minutes)  
+→ Puis relance `START-ALL.bat`
+
 ### Frontend ne se connecte pas au backend
 → Attends 5 secondes après le démarrage que le backend soit prêt
+
+### Je ne sais pas ce qui manque sur mon poste
+→ **Lance `CHECK-SETUP.bat`** pour un diagnostic complet
 
 ### Tout casser et recommencer
 ```powershell
