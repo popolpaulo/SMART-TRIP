@@ -1,205 +1,422 @@
 #!/usr/bin/env pwsh
 # Script pour demarrer TOUT le systeme SMART TRIP (Backend + Frontend + Database)
+# Avec verification automatique et installation des dependances manquantes
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "   SMART TRIP - Demarrage complet du systeme" -ForegroundColor Cyan
+Write-Host "   Version: 2.0 - Auto-installation" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host ""
 
 $ErrorActionPreference = "Continue"
+$workspaceRoot = $PSScriptRoot
 
-# Verifier que Docker est demarre
-Write-Host "Verification de Docker..." -ForegroundColor Yellow
-try {
-    docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        throw "Docker n'est pas accessible"
+# ============================================================
+# FONCTION: Verifier si une commande existe
+# ============================================================
+function Test-CommandExists {
+    param($command)
+    $oldPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'stop'
+    try {
+        if (Get-Command $command -ErrorAction Stop) { return $true }
+    } catch { return $false }
+    finally { $ErrorActionPreference = $oldPreference }
+}
+
+# ============================================================
+# FONCTION: Verifier et installer Node.js
+# ============================================================
+function Ensure-NodeJS {
+    Write-Host "Verification de Node.js..." -ForegroundColor Yellow
+    
+    if (Test-CommandExists node) {
+        $nodeVersion = node --version 2>$null
+        Write-Host "  [OK] Node.js $nodeVersion installe" -ForegroundColor Green
+        return $true
     }
-    Write-Host "  [OK] Docker est demarre" -ForegroundColor Green
-} catch {
-    Write-Host "  [ERREUR] Docker Desktop ne repond pas ou n'est pas demarre." -ForegroundColor Red
-    Write-Host "  Tentative de demarrage de Docker Desktop..." -ForegroundColor Yellow
-
-    $dockerExe = Join-Path $Env:ProgramFiles 'Docker\Docker\Docker Desktop.exe'
-    if (Test-Path $dockerExe) {
-        Start-Process -FilePath $dockerExe -ErrorAction SilentlyContinue | Out-Null
+    
+    Write-Host "  [ERREUR] Node.js n'est pas installe !" -ForegroundColor Red
+    Write-Host "  Telechargement de Node.js..." -ForegroundColor Yellow
+    
+    $nodeUrl = "https://nodejs.org/dist/v20.11.0/node-v20.11.0-x64.msi"
+    $nodeInstaller = "$env:TEMP\node-installer.msi"
+    
+    try {
+        Invoke-WebRequest -Uri $nodeUrl -OutFile $nodeInstaller -UseBasicParsing
+        Write-Host "  Installation de Node.js (cela peut prendre 2-3 minutes)..." -ForegroundColor Cyan
+        Start-Process msiexec.exe -ArgumentList "/i `"$nodeInstaller`" /quiet /norestart" -Wait
+        
+        # Recharger PATH
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+        
+        if (Test-CommandExists node) {
+            Write-Host "  [OK] Node.js installe avec succes !" -ForegroundColor Green
+            return $true
+        } else {
+            Write-Host "  [ERREUR] Installation echouee. Installez manuellement depuis https://nodejs.org" -ForegroundColor Red
+            return $false
+        }
+    } catch {
+        Write-Host "  [ERREUR] Impossible de telecharger Node.js: $_" -ForegroundColor Red
+        Write-Host "  Installez manuellement depuis https://nodejs.org" -ForegroundColor Yellow
+        return $false
     }
+}
 
-    # Attendre jusqua 90s que le daemon reponde
+# ============================================================
+# FONCTION: Installer les dependances npm
+# ============================================================
+function Install-NpmDependencies {
+    param($path, $name)
+    
+    Write-Host "Verification des dependances $name..." -ForegroundColor Yellow
+    
+    Push-Location $path
+    
+    if (-not (Test-Path "node_modules")) {
+        Write-Host "  Installation des dependances $name..." -ForegroundColor Cyan
+        npm install --loglevel=error
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  [OK] Dependances $name installees" -ForegroundColor Green
+        } else {
+            Write-Host "  [ERREUR] Echec d'installation des dependances $name" -ForegroundColor Red
+            Pop-Location
+            return $false
+        }
+    } else {
+        Write-Host "  [OK] Dependances $name deja installees" -ForegroundColor Green
+    }
+    
+    Pop-Location
+    return $true
+}
+
+# ============================================================
+# FONCTION: Verifier et demarrer Docker
+# ============================================================
+function Ensure-Docker {
+    Write-Host "Verification de Docker..." -ForegroundColor Yellow
+    
+    try {
+        docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  [OK] Docker est demarre" -ForegroundColor Green
+            return $true
+        }
+    } catch { }
+    
+    Write-Host "  Docker n'est pas accessible. Tentative de demarrage..." -ForegroundColor Yellow
+    
+    # Chercher Docker Desktop
+    $dockerPaths = @(
+        "$env:ProgramFiles\Docker\Docker\Docker Desktop.exe",
+        "${env:ProgramFiles(x86)}\Docker\Docker\Docker Desktop.exe",
+        "$env:LOCALAPPDATA\Programs\Docker\Docker\Docker Desktop.exe"
+    )
+    
+    $dockerExe = $dockerPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+    
+    if (-not $dockerExe) {
+        Write-Host "  [ERREUR] Docker Desktop n'est pas installe !" -ForegroundColor Red
+        Write-Host "  Telechargez-le depuis: https://www.docker.com/products/docker-desktop" -ForegroundColor Yellow
+        return $false
+    }
+    
+    # Demarrer Docker Desktop
+    Start-Process -FilePath $dockerExe -ErrorAction SilentlyContinue
+    
+    Write-Host "  Attente du demarrage de Docker (jusqu'a 90 secondes)..." -ForegroundColor Cyan
     $maxWait = 90
     $elapsed = 0
+    
     while ($elapsed -lt $maxWait) {
         Start-Sleep -Seconds 3
         $elapsed += 3
-        docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
-        if ($LASTEXITCODE -eq 0) { break }
+        
+        try {
+            docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "`n  [OK] Docker demarre avec succes" -ForegroundColor Green
+                return $true
+            }
+        } catch { }
+        
         Write-Host "." -NoNewline -ForegroundColor DarkCyan
     }
+    
+    Write-Host "`n  [ERREUR] Docker n'a pas demarre apres 90 secondes" -ForegroundColor Red
     Write-Host ""
-
-    docker info --format '{{.ServerVersion}}' 2>$null | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "  [ERREUR] Docker est indisponible. Impossible de continuer." -ForegroundColor Red
-        Write-Host "  Probleme courant sur Windows : WSL non reactif (WSL is unresponsive)." -ForegroundColor Yellow
-        Write-Host ""
-        Write-Host "  Suivez ces etapes dans PowerShell (Administrateur) :" -ForegroundColor Cyan
-        Write-Host "    1) wsl --shutdown" -ForegroundColor White
-        Write-Host "    2) wsl --update" -ForegroundColor White
-        Write-Host "    3) dism /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart" -ForegroundColor White
-        Write-Host "    4) dism /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart" -ForegroundColor White
-        Write-Host "    5) Redemarrez Windows, puis relancez Docker Desktop" -ForegroundColor White
-        Write-Host "    6) Dans Docker Desktop -> Settings -> Resources -> WSL integration : cochez votre distro (Ubuntu)" -ForegroundColor White
-        Write-Host ""
-        Write-Host "  Astuce : executez ensuite START-ALL.bat de nouveau." -ForegroundColor Gray
-        exit 1
-    }
-
-    Write-Host "  [OK] Docker a ete demarre" -ForegroundColor Green
+    Write-Host "  Solutions possibles:" -ForegroundColor Yellow
+    Write-Host "    1. Ouvrez Docker Desktop manuellement" -ForegroundColor White
+    Write-Host "    2. Si erreur WSL, executez en tant qu'Administrateur:" -ForegroundColor White
+    Write-Host "       wsl --shutdown" -ForegroundColor Gray
+    Write-Host "       wsl --update" -ForegroundColor Gray
+    Write-Host "    3. Activez WSL2 dans Docker Desktop -> Settings -> General" -ForegroundColor White
+    Write-Host "    4. Redemarrez Windows si necessaire" -ForegroundColor White
+    
+    return $false
 }
 
-# Verifier que PostgreSQL est demarre
-Write-Host "Verification de PostgreSQL..." -ForegroundColor Yellow
-$pgRunning = docker ps --filter "name=smarttrip_db" --format "{{.Names}}" 2>$null
-
-if ($pgRunning -ne "smarttrip_db") {
-    Write-Host "  PostgreSQL n'est pas demarre. Demarrage..." -ForegroundColor Yellow
+# ============================================================
+# FONCTION: Verifier et demarrer PostgreSQL
+# ============================================================
+function Ensure-PostgreSQL {
+    Write-Host "Verification de PostgreSQL..." -ForegroundColor Yellow
+    
+    $pgRunning = docker ps --filter "name=smarttrip_db" --format "{{.Names}}" 2>$null
+    
+    if ($pgRunning -eq "smarttrip_db") {
+        Write-Host "  [OK] PostgreSQL deja demarre" -ForegroundColor Green
+        return $true
+    }
+    
+    Write-Host "  Demarrage de PostgreSQL via Docker Compose..." -ForegroundColor Cyan
+    Push-Location $workspaceRoot
+    
     docker-compose up -d
     
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  [ERREUR] Echec du demarrage de PostgreSQL" -ForegroundColor Red
+        Pop-Location
+        return $false
+    }
+    
     # Attendre que PostgreSQL soit pret
-    Write-Host "  Attente de PostgreSQL..." -ForegroundColor Cyan
+    Write-Host "  Attente de PostgreSQL (jusqu'a 40 secondes)..." -ForegroundColor Cyan
     $maxAttempts = 20
     $attempt = 0
     
     while ($attempt -lt $maxAttempts) {
         Start-Sleep -Seconds 2
+        
         try {
             docker exec smarttrip_db pg_isready -U smarttrip_user -d smarttrip_dev 2>$null | Out-Null
             if ($LASTEXITCODE -eq 0) {
-                break
+                Write-Host "`n  [OK] PostgreSQL est pret (port 5433)" -ForegroundColor Green
+                Pop-Location
+                return $true
             }
-        } catch {
-            # Continuer
-        }
+        } catch { }
+        
         $attempt++
         Write-Host "." -NoNewline -ForegroundColor Cyan
     }
-    Write-Host ""
-}
-
-Write-Host "  [OK] PostgreSQL est pret (port 5433)" -ForegroundColor Green
-Write-Host ""
-
-Write-Host "============================================================" -ForegroundColor Green
-Write-Host "   Demarrage des serveurs..." -ForegroundColor Green
-Write-Host "============================================================" -ForegroundColor Green
-Write-Host ""
-
-# Creer un job pour le backend
-Write-Host "-> Demarrage du Backend..." -ForegroundColor Cyan
-$backendJob = Start-Job -ScriptBlock {
-    Set-Location $using:PWD
-    npm run dev
-}
-Write-Host "  [OK] Backend demarre (Job ID: $($backendJob.Id))" -ForegroundColor Green
-
-# Attendre 3 secondes pour que le backend demarre
-Start-Sleep -Seconds 3
-
-# Creer un job pour le frontend
-Write-Host "-> Demarrage du Frontend..." -ForegroundColor Cyan
-$frontendJob = Start-Job -ScriptBlock {
-    Set-Location "$using:PWD\frontend"
-    npm run dev
-}
-Write-Host "  [OK] Frontend demarre (Job ID: $($frontendJob.Id))" -ForegroundColor Green
-
-Write-Host ""
-Write-Host "============================================================" -ForegroundColor Magenta
-Write-Host "   SMART TRIP est maintenant en cours d'execution !" -ForegroundColor Magenta
-Write-Host "============================================================" -ForegroundColor Magenta
-Write-Host ""
-Write-Host "  Backend API     : " -NoNewline -ForegroundColor White
-Write-Host "http://localhost:3000" -ForegroundColor Green
-Write-Host "  Frontend Web    : " -NoNewline -ForegroundColor White
-Write-Host "http://localhost:5173" -ForegroundColor Green
-Write-Host "  PostgreSQL     : " -NoNewline -ForegroundColor White
-Write-Host "localhost:5433" -ForegroundColor Green
-Write-Host "  PgAdmin         : " -NoNewline -ForegroundColor White
-Write-Host "http://localhost:5051" -ForegroundColor Green
-Write-Host ""
-Write-Host "============================================================" -ForegroundColor Yellow
-Write-Host "  ATTENTION: Appuyez sur Ctrl+C pour arreter tous les serveurs" -ForegroundColor Yellow
-Write-Host "============================================================" -ForegroundColor Yellow
-Write-Host ""
-
-# Fonction pour nettoyer les jobs a l'arret
-function Cleanup {
-    Write-Host "`n`nArret des serveurs..." -ForegroundColor Yellow
     
-    # Arreter les jobs
-    Stop-Job $backendJob -ErrorAction SilentlyContinue
-    Stop-Job $frontendJob -ErrorAction SilentlyContinue
-    
-    # Retirer les jobs
-    Remove-Job $backendJob -Force -ErrorAction SilentlyContinue
-    Remove-Job $frontendJob -Force -ErrorAction SilentlyContinue
-    
-    # Tuer les processus Node.js restants
-    Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force
-    
-    Write-Host "Serveurs arretes !" -ForegroundColor Green
-    exit
+    Write-Host "`n  [AVERTISSEMENT] PostgreSQL met du temps a demarrer, mais on continue..." -ForegroundColor Yellow
+    Pop-Location
+    return $true
 }
 
-# Enregistrer le gestionnaire d'evenements pour Ctrl+C
-try {
-    [Console]::TreatControlCAsInput = $false
-    $null = Register-EngineEvent PowerShell.Exiting -Action { Cleanup }
-} catch {
-    # Ignorer les erreurs
+# ============================================================
+# FONCTION: Verifier le fichier .env
+# ============================================================
+function Ensure-EnvFile {
+    Write-Host "Verification du fichier .env..." -ForegroundColor Yellow
+    
+    $envFile = Join-Path $workspaceRoot ".env"
+    
+    if (Test-Path $envFile) {
+        Write-Host "  [OK] Fichier .env existe" -ForegroundColor Green
+        return $true
+    }
+    
+    Write-Host "  Creation du fichier .env par defaut..." -ForegroundColor Cyan
+    
+    $envContent = @"
+# Configuration Serveur
+PORT=3000
+NODE_ENV=development
+
+# Database
+DB_HOST=localhost
+DB_PORT=5433
+DB_NAME=smarttrip_dev
+DB_USER=smarttrip_user
+DB_PASSWORD=smarttrip_password
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_EXPIRES_IN=7d
+
+# CORS
+CORS_ORIGIN=http://localhost:5173
+
+# APIs
+AMADEUS_API_KEY=your_amadeus_api_key
+AMADEUS_API_SECRET=your_amadeus_api_secret
+OPENAI_API_KEY=your_openai_api_key
+
+# Logging
+LOG_LEVEL=info
+"@
+    
+    Set-Content -Path $envFile -Value $envContent -Encoding UTF8
+    Write-Host "  [OK] Fichier .env cree (configurez vos cles API)" -ForegroundColor Green
+    return $true
 }
 
-# Boucle infinie pour afficher les logs des deux serveurs
-Write-Host "Logs en temps reel :" -ForegroundColor Cyan
+# ============================================================
+# ETAPE 1: Verifications prerequisites
+# ============================================================
+Write-Host ""
+Write-Host "ETAPE 1/5: Verification des prerequisites" -ForegroundColor Magenta
 Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
+
+if (-not (Ensure-NodeJS)) {
+    Write-Host "`n[ECHEC] Node.js est requis. Relancez apres installation." -ForegroundColor Red
+    exit 1
+}
+
+if (-not (Ensure-Docker)) {
+    Write-Host "`n[ECHEC] Docker est requis. Relancez apres demarrage." -ForegroundColor Red
+    exit 1
+}
+
+Ensure-EnvFile | Out-Null
+
+# ============================================================
+# ETAPE 2: Installation des dependances
+# ============================================================
+Write-Host ""
+Write-Host "ETAPE 2/5: Installation des dependances" -ForegroundColor Magenta
+Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
+
+if (-not (Install-NpmDependencies $workspaceRoot "Backend")) {
+    Write-Host "`n[ECHEC] Impossible d'installer les dependances backend" -ForegroundColor Red
+    exit 1
+}
+
+$frontendPath = Join-Path $workspaceRoot "frontend"
+if (-not (Install-NpmDependencies $frontendPath "Frontend")) {
+    Write-Host "`n[ECHEC] Impossible d'installer les dependances frontend" -ForegroundColor Red
+    exit 1
+}
+
+# ============================================================
+# ETAPE 3: Demarrage de PostgreSQL
+# ============================================================
+Write-Host ""
+Write-Host "ETAPE 3/5: Demarrage de la base de donnees" -ForegroundColor Magenta
+Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
+
+if (-not (Ensure-PostgreSQL)) {
+    Write-Host "`n[ECHEC] PostgreSQL n'a pas demarre correctement" -ForegroundColor Red
+    exit 1
+}
+
+# ============================================================
+# ETAPE 4: Demarrage du Backend
+# ============================================================
+Write-Host ""
+Write-Host "ETAPE 4/5: Demarrage du serveur Backend (Node.js)" -ForegroundColor Magenta
+Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
+
+$backendJob = Start-Job -ScriptBlock {
+    param($root)
+    Set-Location $root
+    npm start 2>&1
+} -ArgumentList $workspaceRoot
+
+Write-Host "  [OK] Backend demarre en arriere-plan (PID: $($backendJob.Id))" -ForegroundColor Green
+Write-Host "  URL: http://localhost:3000" -ForegroundColor Cyan
+
+# ============================================================
+# ETAPE 5: Demarrage du Frontend
+# ============================================================
+Write-Host ""
+Write-Host "ETAPE 5/5: Demarrage du serveur Frontend (Vite)" -ForegroundColor Magenta
+Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
+
+$frontendJob = Start-Job -ScriptBlock {
+    param($frontPath)
+    Set-Location $frontPath
+    npm run dev 2>&1
+} -ArgumentList $frontendPath
+
+Write-Host "  [OK] Frontend demarre en arriere-plan (PID: $($frontendJob.Id))" -ForegroundColor Green
+Write-Host "  URL: http://localhost:5173 ou http://localhost:5174" -ForegroundColor Cyan
+
+# ============================================================
+# ATTENTE ET AFFICHAGE DES LOGS
+# ============================================================
+Write-Host ""
+Write-Host "============================================================" -ForegroundColor Green
+Write-Host "   SMART TRIP - Systeme demarre avec succes !" -ForegroundColor Green
+Write-Host "============================================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "Services actifs:" -ForegroundColor White
+Write-Host "  - PostgreSQL : http://localhost:5433" -ForegroundColor Cyan
+Write-Host "  - Backend API: http://localhost:3000" -ForegroundColor Cyan
+Write-Host "  - Frontend   : http://localhost:5173 ou 5174" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Commandes utiles:" -ForegroundColor Yellow
+Write-Host "  - Appuyez sur Ctrl+C pour arreter tous les services" -ForegroundColor White
+Write-Host "  - Logs backend: docker logs -f smarttrip_backend (si dockerise)" -ForegroundColor Gray
+Write-Host "  - Logs PostgreSQL: docker logs -f smarttrip_db" -ForegroundColor Gray
+Write-Host ""
+Write-Host "Affichage des logs en temps reel (Ctrl+C pour quitter)..." -ForegroundColor DarkCyan
+Write-Host "============================================================" -ForegroundColor DarkGray
 Write-Host ""
 
+# Fonction pour afficher les logs avec couleur
+function Show-JobOutput {
+    param($job, $color)
+    $output = Receive-Job -Job $job -ErrorAction SilentlyContinue
+    if ($output) {
+        $output | ForEach-Object {
+            Write-Host $_ -ForegroundColor $color
+        }
+    }
+}
+
+# Boucle d'affichage des logs
 try {
     while ($true) {
-        # Afficher les logs du backend
-        $backendOutput = Receive-Job $backendJob 2>&1
-        if ($backendOutput) {
-            foreach ($line in $backendOutput) {
-                Write-Host "[BACKEND]  " -NoNewline -ForegroundColor Blue
-                Write-Host $line
-            }
-        }
+        Show-JobOutput -job $backendJob -color DarkYellow
+        Show-JobOutput -job $frontendJob -color DarkCyan
+        Start-Sleep -Milliseconds 500
         
-        # Afficher les logs du frontend
-        $frontendOutput = Receive-Job $frontendJob 2>&1
-        if ($frontendOutput) {
-            foreach ($line in $frontendOutput) {
-                Write-Host "[FRONTEND] " -NoNewline -ForegroundColor Magenta
-                Write-Host $line
-            }
-        }
-        
-    # Verifier si les jobs sont toujours en cours
-        if ($backendJob.State -eq "Failed" -or $backendJob.State -eq "Stopped") {
-            Write-Host "`n[ERREUR] Le backend s'est arrete !" -ForegroundColor Red
+        # Verifier si les jobs sont encore actifs
+        if ($backendJob.State -eq 'Failed') {
+            Write-Host "`n[ERREUR] Le backend s'est arrete de facon inattendue" -ForegroundColor Red
+            Receive-Job -Job $backendJob -ErrorAction Continue
             break
         }
-        if ($frontendJob.State -eq "Failed" -or $frontendJob.State -eq "Stopped") {
-            Write-Host "`n[ERREUR] Le frontend s'est arrete !" -ForegroundColor Red
+        if ($frontendJob.State -eq 'Failed') {
+            Write-Host "`n[ERREUR] Le frontend s'est arrete de facon inattendue" -ForegroundColor Red
+            Receive-Job -Job $frontendJob -ErrorAction Continue
             break
         }
-        
-        Start-Sleep -Milliseconds 100
     }
 } catch {
-    # Ctrl+C intercepte
+    # Ctrl+C ou autre interruption
 } finally {
-    Cleanup
+    Write-Host ""
+    Write-Host "============================================================" -ForegroundColor Red
+    Write-Host "   Arret des services..." -ForegroundColor Yellow
+    Write-Host "============================================================" -ForegroundColor Red
+    Write-Host ""
+    
+    # Arreter les jobs proprement
+    if ($backendJob) {
+        Stop-Job -Job $backendJob -ErrorAction SilentlyContinue
+        Remove-Job -Job $backendJob -Force -ErrorAction SilentlyContinue
+        Write-Host "  [OK] Backend arrete" -ForegroundColor Green
+    }
+    
+    if ($frontendJob) {
+        Stop-Job -Job $frontendJob -ErrorAction SilentlyContinue
+        Remove-Job -Job $frontendJob -Force -ErrorAction SilentlyContinue
+        Write-Host "  [OK] Frontend arrete" -ForegroundColor Green
+    }
+    
+    Write-Host ""
+    Write-Host "  PostgreSQL reste actif (utilisez 'docker-compose down' pour l'arreter)" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  A bientot sur SMART TRIP !" -ForegroundColor Magenta
+    Write-Host ""
 }
