@@ -7,6 +7,7 @@ Le script `start-all.ps1` a été complètement réécrit pour être **100% auto
 ## ✨ Nouvelles Fonctionnalités
 
 ### 1. **Vérification et Installation Automatique de Node.js**
+
 - ✅ Détecte si Node.js est installé
 - ✅ Télécharge automatiquement Node.js v20.11.0 si absent
 - ✅ Installe silencieusement sans intervention utilisateur
@@ -20,6 +21,7 @@ function Ensure-NodeJS {
 ```
 
 ### 2. **Installation Automatique des Dépendances NPM**
+
 - ✅ Vérifie l'existence de `node_modules` dans le backend
 - ✅ Vérifie l'existence de `node_modules` dans le frontend
 - ✅ Lance `npm install` automatiquement si manquant
@@ -33,6 +35,7 @@ function Install-NpmDependencies {
 ```
 
 ### 3. **Démarrage Intelligent de Docker**
+
 - ✅ Détecte si Docker est déjà démarré
 - ✅ Trouve Docker Desktop automatiquement (plusieurs emplacements possibles)
 - ✅ Lance Docker Desktop si nécessaire
@@ -48,6 +51,7 @@ function Ensure-Docker {
 ```
 
 ### 4. **Création Automatique du Fichier .env**
+
 - ✅ Vérifie si `.env` existe à la racine
 - ✅ Crée automatiquement un fichier `.env` par défaut si absent
 - ✅ Contient toutes les variables nécessaires (DB, JWT, APIs)
@@ -60,6 +64,7 @@ function Ensure-EnvFile {
 ```
 
 ### 5. **Démarrage Robuste de PostgreSQL**
+
 - ✅ Vérifie si le conteneur `smarttrip_db` est actif
 - ✅ Lance `docker-compose up -d` si nécessaire
 - ✅ Attend que PostgreSQL soit prêt avec `pg_isready`
@@ -74,6 +79,7 @@ function Ensure-PostgreSQL {
 ```
 
 ### 6. **Affichage Progressif des Étapes**
+
 Le script affiche maintenant 5 étapes claires :
 
 ```
@@ -108,6 +114,7 @@ ETAPE 5/5: Démarrage du serveur Frontend (Vite)
 ## 🔧 Scénarios d'Utilisation
 
 ### Scénario 1 : Premier Clone du Projet
+
 ```bash
 git clone https://github.com/popolpaulo/SMART-TRIP.git
 cd SMART-TRIP
@@ -115,6 +122,7 @@ cd SMART-TRIP
 ```
 
 **Comportement attendu :**
+
 1. Node.js détecté ou installé automatiquement
 2. Docker démarré automatiquement
 3. `.env` créé par défaut
@@ -124,23 +132,27 @@ cd SMART-TRIP
 7. Application prête à l'emploi !
 
 ### Scénario 2 : Suppression Accidentelle de node_modules
+
 ```bash
 rm -rf node_modules frontend/node_modules
 .\START-ALL.bat
 ```
 
 **Comportement attendu :**
+
 1. Détection de l'absence de `node_modules`
 2. Réinstallation automatique des dépendances
 3. Démarrage normal
 
 ### Scénario 3 : Docker non démarré
+
 ```bash
 # Docker Desktop fermé
 .\START-ALL.bat
 ```
 
 **Comportement attendu :**
+
 1. Détection que Docker ne répond pas
 2. Recherche de Docker Desktop.exe
 3. Lancement automatique de Docker Desktop
@@ -149,18 +161,19 @@ rm -rf node_modules frontend/node_modules
 
 ## 📊 Comparaison Avant/Après
 
-| Problème | Avant | Après |
-|----------|-------|-------|
-| **Node.js manquant** | ❌ Erreur cryptique | ✅ Installation automatique |
-| **npm install oublié** | ❌ Crash au démarrage | ✅ Détection + installation auto |
-| **Docker non démarré** | ❌ Erreur vague | ✅ Démarrage auto + guide WSL |
-| **.env manquant** | ❌ Variables undefined | ✅ Création automatique |
-| **PostgreSQL lent** | ❌ Timeout prématuré | ✅ Attente intelligente (40s) |
-| **Logs illisibles** | ❌ Mélange backend/frontend | ✅ Affichage progressif par étape |
+| Problème               | Avant                       | Après                             |
+| ---------------------- | --------------------------- | --------------------------------- |
+| **Node.js manquant**   | ❌ Erreur cryptique         | ✅ Installation automatique       |
+| **npm install oublié** | ❌ Crash au démarrage       | ✅ Détection + installation auto  |
+| **Docker non démarré** | ❌ Erreur vague             | ✅ Démarrage auto + guide WSL     |
+| **.env manquant**      | ❌ Variables undefined      | ✅ Création automatique           |
+| **PostgreSQL lent**    | ❌ Timeout prématuré        | ✅ Attente intelligente (40s)     |
+| **Logs illisibles**    | ❌ Mélange backend/frontend | ✅ Affichage progressif par étape |
 
 ## 🛠️ Guide de Dépannage Intégré
 
 ### Erreur WSL (Windows Subsystem for Linux)
+
 Si Docker ne démarre pas, le script affiche automatiquement :
 
 ```
@@ -176,6 +189,7 @@ Solutions possibles:
 ```
 
 ### Erreur d'Installation de Node.js
+
 Si le téléchargement échoue :
 
 ```
@@ -184,6 +198,7 @@ Installez manuellement depuis https://nodejs.org
 ```
 
 ### PostgreSQL ne Répond Pas
+
 Le script attend intelligemment :
 
 ```
@@ -227,6 +242,7 @@ LOG_LEVEL=info
 **Un seul double-clic suffit !**
 
 Même avec :
+
 - ❌ Pas de Node.js installé
 - ❌ Pas de dépendances npm
 - ❌ Docker fermé
@@ -250,6 +266,7 @@ Pour tester le script sur un nouveau poste :
 ## 🚀 Prochaines Étapes
 
 Le script est maintenant **production-ready** pour :
+
 - ✅ Onboarding de nouveaux développeurs
 - ✅ Installations propres après `git clone`
 - ✅ Récupération après nettoyage de dépendances
