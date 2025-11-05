@@ -261,19 +261,19 @@ export const AIRLINES = {
  */
 export const getAirlineInfo = (code) => {
   if (!code) return null;
-  
+
   // Normaliser le code (majuscules, 2 caractères)
   const normalizedCode = code.trim().toUpperCase().slice(0, 2);
-  
+
   const airline = AIRLINES[normalizedCode];
-  
+
   if (airline) {
     return {
       code: normalizedCode,
       ...airline,
     };
   }
-  
+
   // Si la compagnie n'est pas trouvée, retourner un objet par défaut
   return {
     code: normalizedCode,
@@ -291,19 +291,25 @@ export const getAirlineInfo = (code) => {
  * @returns {string} - URL de réservation
  */
 export const generateBookingLink = (flight, searchParams) => {
-  const airlineInfo = getAirlineInfo(flight.carrierIds?.[0] || flight.validatingAirlineCodes?.[0] || flight.airline);
-  
+  const airlineInfo = getAirlineInfo(
+    flight.carrierIds?.[0] ||
+      flight.validatingAirlineCodes?.[0] ||
+      flight.airline
+  );
+
   if (!airlineInfo) {
     // Fallback vers Google Flights
     const { origin, destination, departureDate, returnDate } = searchParams;
-    return `https://www.google.com/flights?hl=fr#flt=${origin}.${destination}.${departureDate}${returnDate ? '*' + destination + '.' + origin + '.' + returnDate : ''};c:EUR;e:1;sd:1;t:f`;
+    return `https://www.google.com/flights?hl=fr#flt=${origin}.${destination}.${departureDate}${
+      returnDate ? "*" + destination + "." + origin + "." + returnDate : ""
+    };c:EUR;e:1;sd:1;t:f`;
   }
-  
+
   // Si le vol a un deep link spécifique, l'utiliser
   if (flight.deepLink || flight.bookingUrl) {
     return flight.deepLink || flight.bookingUrl;
   }
-  
+
   // Sinon, utiliser l'URL de base de la compagnie
   return airlineInfo.bookingUrl;
 };
