@@ -47,6 +47,16 @@ class TrendingPriceUpdater {
             continue;
           }
 
+          // Eviter les recherches vers le meme aeroport (ex: CDG -> CDG)
+          if (
+            destinationAirport.toUpperCase() === String(originAirport).toUpperCase()
+          ) {
+            logger.warn(
+              `⚠️ Destination identique a l'origine (${originAirport}). Passage ignore pour ${destination.city}`
+            );
+            continue;
+          }
+
           logger.info(
             `🔍 Recherche de vols ${originAirport} → ${destinationAirport}...`
           );

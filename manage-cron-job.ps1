@@ -59,7 +59,8 @@ switch ($choice) {
         
         Write-Host ""
         Write-Host "📊 Logs récents:" -ForegroundColor Cyan
-        $logFile = "C:\Users\paulm\OneDrive - ESME\Documents\ESME\Ingé A2 MSI\SMART-TRIP\logs\price-update.log"
+    $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $logFile = Join-Path $scriptDir "logs/price-update.log"
         if (Test-Path $logFile) {
             Get-Content $logFile -Tail 30
         } else {
@@ -89,7 +90,8 @@ switch ($choice) {
         Write-Host "   LOGS DE MISE À JOUR DES PRIX" -ForegroundColor Cyan
         Write-Host "=========================================" -ForegroundColor Cyan
         Write-Host ""
-        $logFile = "C:\Users\paulm\OneDrive - ESME\Documents\ESME\Ingé A2 MSI\SMART-TRIP\logs\price-update.log"
+    $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $logFile = Join-Path $scriptDir "logs/price-update.log"
         if (Test-Path $logFile) {
             $lines = Read-Host "Combien de lignes afficher ? (défaut: 50)"
             if ([string]::IsNullOrWhiteSpace($lines)) { $lines = 50 }

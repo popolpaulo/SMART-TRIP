@@ -48,6 +48,34 @@ async function runMigrations() {
       logger.warn("⚠️ Migration 002 introuvable, passage ignoré");
     }
 
+    // Migration 003: Trending real prices columns
+    logger.info(
+      "📝 Migration 003: Trending real prices (min_price, last_price_update)..."
+    );
+    const migrationPath003 = path.join(
+      __dirname,
+      "migrations",
+      "003_trending_real_prices.sql"
+    );
+    if (fs.existsSync(migrationPath003)) {
+      try {
+        const migration003 = fs.readFileSync(migrationPath003, "utf8");
+        await db.query(migration003);
+        logger.info("✅ Migration 003 terminée");
+      } catch (error) {
+        if (
+          error.message.includes("already exists") ||
+          error.message.includes("IF NOT EXISTS")
+        ) {
+          logger.info("⏭️  Migration 003 déjà appliquée, passage ignoré");
+        } else {
+          throw error;
+        }
+      }
+    } else {
+      logger.warn("⚠️ Migration 003 introuvable, passage ignoré");
+    }
+
     logger.info("✅ Toutes les migrations terminées avec succès !");
     logger.info("📊 Base de données à jour");
 

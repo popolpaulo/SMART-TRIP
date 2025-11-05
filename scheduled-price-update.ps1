@@ -1,71 +1,71 @@
-# Script de mise à jour automatique des prix des destinations tendances
-# Ce script est conçu pour être exécuté via le Planificateur de tâches Windows
+# Script de mise a jour automatique des prix des destinations tendances
+# Ce script est concu pour etre execute via le Planificateur de taches Windows
 
-# Définir le chemin du projet
-$projectPath = "C:\Users\paulm\OneDrive - ESME\Documents\ESME\Ingé A2 MSI\SMART-TRIP"
+# Definir le chemin du projet (utilise le repertoire du script)
+$projectPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-# Définir le chemin du fichier de log
-$logPath = "$projectPath\logs"
-$logFile = "$logPath\price-update.log"
+# Definir le chemin du fichier de log
+$logPath = Join-Path $projectPath "logs"
+$logFile = Join-Path $logPath "price-update.log"
 
-# Créer le dossier logs s'il n'existe pas
+# Creer le dossier logs s'il n'existe pas
 if (-not (Test-Path $logPath)) {
     New-Item -ItemType Directory -Path $logPath -Force | Out-Null
 }
 
-# Fonction pour écrire dans le log avec timestamp
+# Fonction pour ecrire dans le log avec timestamp
 function Write-Log {
     param([string]$message)
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    "$timestamp - $message" | Out-File -Append -FilePath $logFile
+    "$timestamp - $message" | Out-File -Append -FilePath $logFile -Encoding UTF8
     Write-Host "$timestamp - $message"
 }
 
-# Début de l'exécution
+# Debut de l'execution
 Write-Log "=========================================="
-Write-Log "Démarrage de la mise à jour des prix"
+Write-Log "Demarrage de la mise a jour des prix"
 Write-Log "=========================================="
 
 try {
-    # Changer de répertoire vers le projet
+    # Changer de repertoire vers le projet
     Set-Location $projectPath
-    Write-Log "Répertoire actuel: $projectPath"
+    Write-Log "Repertoire actuel: $projectPath"
 
-    # Vérifier que Node.js est disponible
+    # Verifier que Node.js est disponible
     $nodeVersion = node --version 2>&1
     if ($LASTEXITCODE -eq 0) {
-        Write-Log "Node.js détecté: $nodeVersion"
+        Write-Log "Node.js detecte: $nodeVersion"
     } else {
-        Write-Log "ERREUR: Node.js n'est pas installé ou pas dans le PATH"
+        Write-Log "ERREUR: Node.js n'est pas installe ou pas dans le PATH"
         exit 1
     }
 
-    # Vérifier que le script existe
-    $scriptPath = "$projectPath\update-trending-prices.js"
+    # Verifier que le script existe
+    $scriptPath = Join-Path $projectPath "update-trending-prices.js"
     if (-not (Test-Path $scriptPath)) {
         Write-Log "ERREUR: Script update-trending-prices.js introuvable"
         exit 1
     }
 
-    # Exécuter le script de mise à jour
-    Write-Log "Exécution du script de mise à jour..."
+    # Executer le script de mise a jour
+    Write-Log "Execution du script de mise a jour..."
     $output = node update-trending-prices.js 2>&1
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Log "✅ Mise à jour terminée avec succès"
-        Write-Log "Résultat: $output"
+        Write-Log "Mise a jour terminee avec succes"
+        Write-Log "Resultat: $output"
     } else {
-        Write-Log "❌ Erreur lors de la mise à jour"
+        Write-Log "Erreur lors de la mise a jour"
         Write-Log "Erreur: $output"
         exit 1
     }
 
 } catch {
-    Write-Log "❌ Exception: $($_.Exception.Message)"
+    Write-Log "Exception: $($_.Exception.Message)"
     exit 1
 }
 
 Write-Log "=========================================="
-Write-Log "Fin de la mise à jour"
+Write-Log "Fin de la mise a jour"
 Write-Log "=========================================="
 Write-Log ""

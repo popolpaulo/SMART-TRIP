@@ -17,10 +17,11 @@ if (-not $isAdmin) {
 
 # Configuration
 $taskName = "SMART-TRIP-UpdatePrices"
-$projectPath = "C:\Users\paulm\OneDrive - ESME\Documents\ESME\Ingé A2 MSI\SMART-TRIP"
-$scriptPath = "$projectPath\scheduled-price-update.ps1"
+$projectPath = $PSScriptRoot
+$scriptPath = Join-Path $projectPath "scheduled-price-update.ps1"
 
 Write-Host "Chemin du projet: $projectPath" -ForegroundColor Gray
+Write-Host "Script: $scriptPath" -ForegroundColor Gray
 Write-Host ""
 
 # Verifier que le script existe
