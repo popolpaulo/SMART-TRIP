@@ -80,20 +80,24 @@ Double-cliquez sur `MANAGE-CRON-JOB.bat`
 Vous ne voulez pas attendre 2h00 du matin ? Lancez manuellement :
 
 ### Option 1 : Script de gestion
+
 1. Double-cliquer sur `MANAGE-CRON-JOB.bat`
 2. Choisir l'option **"1. Exécuter la tâche maintenant"**
 
 ### Option 2 : Planificateur de tâches
+
 1. Ouvrir le Planificateur de tâches
 2. Clic droit sur `SMART-TRIP-UpdatePrices`
 3. Cliquer sur **"Exécuter"**
 
 ### Option 3 : PowerShell
+
 ```powershell
 Start-ScheduledTask -TaskName "SMART-TRIP-UpdatePrices"
 ```
 
 ### Option 4 : Commande directe
+
 ```bash
 npm run prices:update
 ```
@@ -107,10 +111,12 @@ npm run prices:update
 Ouvrir : `logs/price-update.log`
 
 ### Option 2 : Script de gestion
+
 1. Double-cliquer sur `MANAGE-CRON-JOB.bat`
 2. Choisir **"4. Voir les logs"**
 
 ### Option 3 : PowerShell
+
 ```powershell
 Get-Content ".\logs\price-update.log" -Tail 50
 ```
@@ -142,10 +148,12 @@ Get-Content ".\logs\price-update.log" -Tail 50
 Si vous voulez mettre en pause (vacances, maintenance, etc.) :
 
 **Option 1 :**
+
 1. Double-cliquer sur `MANAGE-CRON-JOB.bat`
 2. Choisir **"2. Désactiver la tâche"**
 
 **Option 2 :**
+
 ```powershell
 Disable-ScheduledTask -TaskName "SMART-TRIP-UpdatePrices"
 ```
@@ -153,10 +161,12 @@ Disable-ScheduledTask -TaskName "SMART-TRIP-UpdatePrices"
 ### Réactiver
 
 **Option 1 :**
+
 1. Double-cliquer sur `MANAGE-CRON-JOB.bat`
 2. Choisir **"3. Activer la tâche"**
 
 **Option 2 :**
+
 ```powershell
 Enable-ScheduledTask -TaskName "SMART-TRIP-UpdatePrices"
 ```
@@ -164,11 +174,13 @@ Enable-ScheduledTask -TaskName "SMART-TRIP-UpdatePrices"
 ### Supprimer complètement
 
 **Option 1 :**
+
 1. Double-cliquer sur `MANAGE-CRON-JOB.bat`
 2. Choisir **"5. Supprimer la tâche"**
 3. Confirmer avec "oui"
 
 **Option 2 :**
+
 ```powershell
 Unregister-ScheduledTask -TaskName "SMART-TRIP-UpdatePrices" -Confirm:$false
 ```
@@ -215,24 +227,30 @@ Pour changer :
 ## 🆘 Problèmes courants
 
 ### "Accès refusé"
+
 👉 Exécuter `INSTALL-CRON-JOB.bat` en tant qu'administrateur (clic droit)
 
 ### Tâche ne s'exécute pas
+
 👉 Vérifier l'état dans le Planificateur de tâches  
 👉 Vérifier que la tâche est activée (pas désactivée)  
 👉 Vérifier le code de retour de la dernière exécution (0 = succès)
 
 ### Pas de logs
+
 👉 Créer le dossier `logs` manuellement :
+
 ```bash
 mkdir logs
 ```
 
 ### Erreur "Node.js introuvable"
+
 👉 Vérifier que Node.js est dans le PATH système  
 👉 Redémarrer Windows après installation de Node.js
 
 ### Erreur API Amadeus
+
 👉 Vérifier `.env` → `AMADEUS_API_KEY` et `AMADEUS_API_SECRET`  
 👉 Vérifier quota API sur https://developers.amadeus.com
 
@@ -243,6 +261,7 @@ mkdir logs
 Votre système de **mise à jour automatique des prix** est maintenant opérationnel !
 
 Les prix des "Destinations populaires" seront désormais :
+
 - ✅ **Réels** (depuis l'API Amadeus)
 - ✅ **À jour** (actualisés tous les jours)
 - ✅ **Automatiques** (aucune intervention manuelle)
@@ -254,6 +273,7 @@ Les prix des "Destinations populaires" seront désormais :
 ## 📞 Support
 
 Pour toute question ou problème, consultez :
+
 - Les logs : `logs/price-update.log`
 - La documentation : `CRON_JOB_INSTALLATION_GUIDE.md`
 - Le script de gestion : `MANAGE-CRON-JOB.bat`

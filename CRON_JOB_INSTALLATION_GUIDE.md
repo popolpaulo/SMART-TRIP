@@ -40,6 +40,7 @@ SMART-TRIP/
 ### Étape 3 : Accepter les privilèges administrateur
 
 Windows va vous demander :
+
 ```
 ┌────────────────────────────────────────────┐
 │  Contrôle de compte d'utilisateur         │
@@ -162,15 +163,19 @@ Choisissez une action (1-6):
 ### Actions disponibles
 
 #### 1️⃣ Exécuter maintenant
+
 Lance immédiatement la mise à jour des prix (utile pour tester)
 
 #### 2️⃣ Désactiver
+
 Met la tâche en pause (elle ne s'exécutera plus automatiquement)
 
 #### 3️⃣ Activer
+
 Réactive la tâche si elle était désactivée
 
 #### 4️⃣ Voir les logs
+
 Affiche les logs de la dernière exécution
 
 ```
@@ -191,6 +196,7 @@ Combien de lignes afficher ? (défaut: 50): 20
 ```
 
 #### 5️⃣ Supprimer
+
 Supprime complètement la tâche planifiée (demande confirmation)
 
 ---
@@ -200,11 +206,13 @@ Supprime complètement la tâche planifiée (demande confirmation)
 ### Ouvrir le Planificateur de tâches
 
 **Méthode 1 :** Recherche Windows
+
 ```
 [🔍] Rechercher : "Planificateur de tâches"
 ```
 
 **Méthode 2 :** Exécuter
+
 ```
 [Win + R] → taskschd.msc → [Entrée]
 ```
@@ -283,22 +291,29 @@ SMART-TRIP/
 ## 🆘 Problèmes fréquents
 
 ### "Accès refusé"
+
 👉 Vous devez exécuter **en tant qu'administrateur** (clic droit)
 
 ### "La tâche existe déjà"
+
 👉 Utilisez `MANAGE-CRON-JOB.bat` pour supprimer l'ancienne tâche d'abord
 
 ### "PowerShell bloqué par les stratégies d'exécution"
+
 👉 Le script utilise `-ExecutionPolicy Bypass` pour éviter ce problème
 
 ### La tâche ne s'exécute pas
+
 👉 Vérifiez dans le Planificateur de tâches :
+
 - État : "Prêt" (pas "Désactivé")
 - Dernière exécution : vérifier le code de retour (0 = succès)
 - Historique : activer l'historique des tâches dans les paramètres
 
 ### Impossible de voir les logs
+
 👉 Vérifiez que le dossier `logs/` existe :
+
 ```bash
 mkdir logs
 ```
