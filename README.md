@@ -35,6 +35,7 @@ Pour Windows, nous avons créé des scripts d'automatisation :
 ```
 
 Le script `SETUP.bat` va automatiquement :
+
 - ✅ Vérifier Node.js et Docker
 - ✅ Installer les dépendances npm
 - ✅ Créer le fichier `.env`
@@ -44,9 +45,30 @@ Le script `SETUP.bat` va automatiquement :
 
 **C'est tout ! En 2 minutes, votre environnement est prêt ! 🚀**
 
+### 🔑 Configuration des API Keys (Optionnel)
+
+Par défaut, le système utilise des **données MOCK** pour le développement.
+
+Pour obtenir des **vraies données de vols** :
+
+1. **Guide rapide** : Voir `QUICK_API_SETUP.md` (⏱️ 10 min)
+2. **Guide complet** : Voir `CONFIGURATION_API_KEYS.md` (détaillé)
+
+**APIs disponibles** :
+
+- ✅ **Amadeus** (obligatoire) - Vraies données de 500+ compagnies - GRATUIT
+- ⚠️ **OpenAI** (recommandé) - Prédictions IA avancées - ~5€/mois
+- ❌ **Skyscanner** (optionnel) - Comparaison prix - Difficile à obtenir
+
+**Vérifier la configuration** :
+
+```bash
+node check-api-config.js
+```
+
 ---
 
-## ⚙️ Installation Manuelle
+## ⚡ Installation Manuelle
 
 ### 1. Cloner le repository
 
@@ -70,6 +92,7 @@ cp .env.example .env
 ```
 
 **Important** : Modifiez au minimum ces valeurs dans `.env` :
+
 - `JWT_SECRET` : Choisissez une clé secrète complexe
 - `DB_PASSWORD` : Changez le mot de passe de la base de données
 
@@ -82,10 +105,12 @@ docker-compose up -d
 ```
 
 Cela démarre :
+
 - PostgreSQL sur le port `5433`
 - PgAdmin (interface web) sur `http://localhost:5051`
 
 **Accès PgAdmin** :
+
 - URL: http://localhost:5051
 - Email: admin@smarttrip.com
 - Mot de passe: admin
@@ -105,11 +130,13 @@ npm run db:seed
 ### 7. Démarrer le serveur
 
 **Mode développement** (avec rechargement automatique) :
+
 ```bash
 npm run dev
 ```
 
 **Mode production** :
+
 ```bash
 npm start
 ```
@@ -158,12 +185,14 @@ SMART-TRIP/
 ## 🔌 API Endpoints
 
 ### Authentification
+
 - `POST /api/auth/register` - Inscription
 - `POST /api/auth/login` - Connexion
 - `GET /api/auth/verify` - Vérifier le token
 - `POST /api/auth/logout` - Déconnexion
 
 ### Utilisateur
+
 - `GET /api/users/profile` - Profil utilisateur
 - `PUT /api/users/profile` - Modifier le profil
 - `GET /api/users/preferences` - Préférences de voyage
@@ -171,17 +200,20 @@ SMART-TRIP/
 - `DELETE /api/users/account` - Supprimer le compte
 
 ### Vols
+
 - `POST /api/flights/search` - Rechercher des vols
 - `GET /api/flights/:id` - Détails d'un vol
 - `POST /api/flights/book` - Réserver un vol
 - `GET /api/flights/user/searches` - Historique des recherches
 
 ### Hôtels
+
 - `POST /api/hotels/search` - Rechercher des hôtels
 - `GET /api/hotels/:id` - Détails d'un hôtel
 - `POST /api/hotels/book` - Réserver un hôtel
 
 ### Voyages
+
 - `GET /api/trips` - Liste des voyages
 - `GET /api/trips/:id` - Détails d'un voyage
 - `POST /api/trips` - Créer un voyage
@@ -191,12 +223,14 @@ SMART-TRIP/
 - `DELETE /api/trips/:id/activities/:activityId` - Retirer une activité
 
 ### Recherche
+
 - `POST /api/search/global` - Recherche globale
 - `GET /api/search/trending` - Destinations tendances
 - `POST /api/search/suggestions` - Suggestions IA
 - `GET /api/search/autocomplete` - Autocomplétion
 
 ### Alertes de prix
+
 - `GET /api/alerts` - Liste des alertes
 - `GET /api/alerts/:id` - Détails d'une alerte
 - `POST /api/alerts` - Créer une alerte
@@ -209,11 +243,13 @@ SMART-TRIP/
 ### Avec curl (PowerShell)
 
 **Inscription** :
+
 ```powershell
 Invoke-WebRequest -Uri http://localhost:3000/api/auth/register -Method POST -Headers @{"Content-Type"="application/json"} -Body '{"email":"test@example.com","password":"Test123!","firstName":"Jean","lastName":"Dupont"}'
 ```
 
 **Connexion** :
+
 ```powershell
 Invoke-WebRequest -Uri http://localhost:3000/api/auth/login -Method POST -Headers @{"Content-Type"="application/json"} -Body '{"email":"test@example.com","password":"Test123!"}'
 ```
@@ -229,11 +265,13 @@ Invoke-WebRequest -Uri http://localhost:3000/api/auth/login -Method POST -Header
 ### Pour travailler à deux sur le même projet :
 
 #### Méthode 1 : Base de données locale (chacun sa BDD)
+
 - Chaque développeur a sa propre base de données via Docker
 - Vous synchronisez le code via Git
 - Les données sont locales à chaque machine
 
 #### Méthode 2 : Base de données partagée (recommandé pour débuter)
+
 - Un de vous héberge la BDD et la rend accessible (via tunneling ou serveur cloud)
 - Modifier `DB_HOST` dans `.env` pour pointer vers l'IP de l'hôte
 - **Attention** : Nécessite une configuration réseau
@@ -341,17 +379,20 @@ docker-compose up -d
 ## 🎯 Prochaines étapes
 
 1. **Intégration des APIs externes** :
+
    - APIs de vols (Amadeus, Skyscanner, etc.)
    - APIs d'hôtels (Booking.com, Hotels.com, etc.)
    - API météo
    - API VPN pour la géolocalisation
 
 2. **Intelligence Artificielle** :
+
    - Modèle de recommandation basé sur les préférences
    - Prédiction des prix
    - Analyse des tendances
 
 3. **Frontend** :
+
    - Développer l'interface utilisateur (React, Vue, ou autre)
    - Intégration avec le backend
 
@@ -372,17 +413,21 @@ Après avoir exécuté `npm run db:seed`, vous aurez 3 utilisateurs :
 ## 🐛 Dépannage
 
 ### Erreur de connexion à PostgreSQL
+
 - Vérifiez que Docker est démarré : `docker-compose ps`
 - Vérifiez les logs : `docker-compose logs postgres`
 - Redémarrez : `docker-compose restart postgres`
 
 ### Port 3000 déjà utilisé
+
 Changez le port dans `.env` :
+
 ```
 PORT=3001
 ```
 
 ### Erreur JWT
+
 Vérifiez que `JWT_SECRET` est bien défini dans `.env`
 
 ## 📞 Support
