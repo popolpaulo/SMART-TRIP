@@ -1,20 +1,20 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const compression = require('compression');
-const rateLimit = require('express-rate-limit');
-const logger = require('./src/utils/logger');
-const db = require('./src/database/connection');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const compression = require("compression");
+const rateLimit = require("express-rate-limit");
+const logger = require("./src/utils/logger");
+const db = require("./src/database/connection");
 
 // Import des routes
-const authRoutes = require('./src/routes/auth.routes');
-const userRoutes = require('./src/routes/user.routes');
-const flightRoutes = require('./src/routes/flight.routes');
-const hotelRoutes = require('./src/routes/hotel.routes');
-const tripRoutes = require('./src/routes/trip.routes');
-const searchRoutes = require('./src/routes/search.routes');
-const alertRoutes = require('./src/routes/alert.routes');
+const authRoutes = require("./src/routes/auth.routes");
+const userRoutes = require("./src/routes/user.routes");
+const flightRoutes = require("./src/routes/flight.routes");
+const hotelRoutes = require("./src/routes/hotel.routes");
+const tripRoutes = require("./src/routes/trip.routes");
+const searchRoutes = require("./src/routes/search.routes");
+const alertRoutes = require("./src/routes/alert.routes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,18 +23,38 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet());
 app.use(compression());
 
-// CORS
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
-  credentials: true
-}));
+// CORS - Autorise les ports 5173 et 5174 pour le frontend
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  process.env.CORS_ORIGIN,
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Permet les requêtes sans origin (ex: Postman, curl)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        logger.warn(`CORS blocked origin: ${origin}`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // max 100 requêtes par IP
+  max: 100, // max 100 requêtes par IP
 });
-app.use('/api/', limiter);
+app.use("/api/", limiter);
 
 // Body parsing
 app.use(express.json());
@@ -47,46 +67,46 @@ app.use((req, res, next) => {
 });
 
 // Route de santé
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+app.get("/health", (req, res) => {
+  res.json({
+    status: "OK",
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV 
+    environment: process.env.NODE_ENV,
   });
 });
 
 // Routes API
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/flights', flightRoutes);
-app.use('/api/hotels', hotelRoutes);
-app.use('/api/trips', tripRoutes);
-app.use('/api/search', searchRoutes);
-app.use('/api/alerts', alertRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/flights", flightRoutes);
+app.use("/api/hotels", hotelRoutes);
+app.use("/api/trips", tripRoutes);
+app.use("/api/search", searchRoutes);
+app.use("/api/alerts", alertRoutes);
 
 // Route par défaut
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Bienvenue sur SMART TRIP API',
-    version: '1.0.0',
+app.get("/", (req, res) => {
+  res.json({
+    message: "Bienvenue sur SMART TRIP API",
+    version: "1.0.0",
     endpoints: {
-      health: '/health',
-      auth: '/api/auth',
-      users: '/api/users',
-      flights: '/api/flights',
-      hotels: '/api/hotels',
-      trips: '/api/trips',
-      search: '/api/search',
-      alerts: '/api/alerts'
-    }
+      health: "/health",
+      auth: "/api/auth",
+      users: "/api/users",
+      flights: "/api/flights",
+      hotels: "/api/hotels",
+      trips: "/api/trips",
+      search: "/api/search",
+      alerts: "/api/alerts",
+    },
   });
 });
 
 // Gestion des erreurs 404
 app.use((req, res) => {
-  res.status(404).json({ 
-    error: 'Route non trouvée',
-    path: req.path 
+  res.status(404).json({
+    error: "Route non trouvée",
+    path: req.path,
   });
 });
 
@@ -94,10 +114,11 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   logger.error(`Error: ${err.message}`);
   logger.error(err.stack);
-  
+
   res.status(err.status || 500).json({
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Erreur serveur',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    error:
+      process.env.NODE_ENV === "development" ? err.message : "Erreur serveur",
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 });
 
@@ -105,14 +126,14 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   logger.info(`🚀 Serveur SMART TRIP démarré sur http://localhost:${PORT}`);
   logger.info(`📊 Environnement: ${process.env.NODE_ENV}`);
-  
+
   // Test de connexion à la base de données
   db.testConnection();
 });
 
 // Gestion de l'arrêt gracieux
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM reçu, arrêt du serveur...');
+process.on("SIGTERM", () => {
+  logger.info("SIGTERM reçu, arrêt du serveur...");
   db.closeConnection();
   process.exit(0);
 });
