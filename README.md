@@ -17,7 +17,7 @@ Backend Node.js/Express pour la plateforme SMART TRIP - Comparateur de vols et p
 - Docker Desktop
 - Git
 
-## ⚡ Installation Rapide (Recommandé)
+## ⚡ Installation Rapide (Dév local)
 
 ### 🎯 Setup automatique en un clic !
 
@@ -45,6 +45,43 @@ Le script `SETUP.bat` va automatiquement :
 
 **C'est tout ! En 2 minutes, votre environnement est prêt ! 🚀**
 
+### 🐳 Exécution Full Docker (Script obligatoire)
+
+Utilisez uniquement le script Windows / PowerShell :
+
+```powershell
+./ns_start-docker.ps1
+```
+
+Ou double-cliquez `ns_start-docker.bat`.
+
+Le script :
+
+- Crée `.env` minimal si absent
+- Build images backend + frontend
+- Démarre postgres, pgadmin, backend, frontend
+- Vérifie la santé de Postgres
+
+Services exposés :
+
+- Backend API : http://localhost:3000
+- Frontend : http://localhost:5173
+- PgAdmin : http://localhost:5051
+
+Arrêt :
+
+```powershell
+docker compose down
+```
+
+Rebuild après modifications :
+
+```powershell
+docker compose build backend frontend; docker compose up -d
+```
+
+Doc détaillée : `ns_DOCKER_SETUP.md`.
+
 ### 🔑 Configuration des API Keys (Optionnel)
 
 Par défaut, le système utilise des **données MOCK** pour le développement.
@@ -60,11 +97,7 @@ Pour obtenir des **vraies données de vols** :
 - ⚠️ **OpenAI** (recommandé) - Prédictions IA avancées - ~5€/mois
 - ❌ **Skyscanner** (optionnel) - Comparaison prix - Difficile à obtenir
 
-**Vérifier la configuration** :
-
-```bash
-node check-api-config.js
-```
+**Vérification** : démarrez l'API et vérifiez `/health` sur `http://localhost:3000/health`.
 
 ---
 
@@ -253,6 +286,20 @@ SMART-TRIP/
 - `PATCH /api/alerts/:id/toggle` - Activer/désactiver
 
 ## 🧪 Tester l'API
+
+### 🚀 One-liner clonage + démarrage (script)
+
+Sous PowerShell :
+
+```powershell
+git clone https://github.com/popolpaulo/SMART-TRIP.git; cd SMART-TRIP; ./ns_start-docker.ps1
+```
+
+Arrêt :
+
+```powershell
+docker compose down
+```
 
 ### Avec curl (PowerShell)
 

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Base de données PostgreSQL
   postgres:
@@ -36,6 +34,41 @@ services:
       - smarttrip_network
     depends_on:
       - postgres
+
+  # Backend Node.js (Production)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smarttrip_backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: postgres # Override pour réseau interne
+      DB_PORT: 5432 # Port interne PostgreSQL
+      PORT: 3000
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      - smarttrip_network
+
+  # Frontend (static build servi par Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: smarttrip_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80" # Conserve le port 5173 côté host
+    networks:
+      - smarttrip_network
 
 volumes:
   postgres_data:

@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+logs
+*.log
+.env
+.env.*
+frontend/node_modules
+frontend/dist
+.git
+.vscode
+Dockerfile*
+README.md
+ns_*
