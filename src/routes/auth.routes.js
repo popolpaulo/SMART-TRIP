@@ -3,6 +3,7 @@ const router = express.Router();
 const { body } = require('express-validator');
 const authController = require('../controllers/auth.controller');
 const validate = require('../middleware/validator.middleware');
+const { authenticateToken } = require('../middleware/auth.middleware');
 
 // Route d'inscription
 router.post('/register',
@@ -31,5 +32,9 @@ router.get('/verify', authController.verifyToken);
 
 // Route de déconnexion
 router.post('/logout', authController.logout);
+
+// Routes protégées (nécessitent un token)
+router.get('/profile', authenticateToken, authController.getProfile);
+router.put('/profile', authenticateToken, authController.updateProfile);
 
 module.exports = router;

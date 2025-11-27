@@ -1,9 +1,12 @@
-import { Plane, Menu, User, Heart } from 'lucide-react'
+import { Plane, Menu, User, Heart, LogOut, UserCircle } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Layout({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const { user, isAuthenticated, logout } = useAuth()
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -27,23 +30,68 @@ export default function Layout({ children }) {
               <Link to="/hotels" className="text-gray-700 hover:text-primary-600 font-medium transition">
                 Hôtels
               </Link>
-              <Link to="/trips" className="text-gray-700 hover:text-primary-600 font-medium transition">
-                Mes voyages
-              </Link>
-              <Link to="/alerts" className="text-gray-700 hover:text-primary-600 font-medium transition">
-                Alertes prix
-              </Link>
+              {isAuthenticated && (
+                <>
+                  <Link to="/trips" className="text-gray-700 hover:text-primary-600 font-medium transition">
+                    Mes voyages
+                  </Link>
+                  <Link to="/alerts" className="text-gray-700 hover:text-primary-600 font-medium transition">
+                    Alertes prix
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* User Menu */}
             <div className="hidden md:flex items-center space-x-4">
-              <button className="p-2 text-gray-600 hover:text-primary-600 transition">
-                <Heart className="h-5 w-5" />
-              </button>
-              <button className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-primary-600 border border-gray-300 rounded-lg transition">
-                <User className="h-5 w-5" />
-                <span className="font-medium">Connexion</span>
-              </button>
+              {isAuthenticated ? (
+                <>
+                  <button className="p-2 text-gray-600 hover:text-primary-600 transition">
+                    <Heart className="h-5 w-5" />
+                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                      className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-primary-600 border border-gray-300 rounded-lg transition"
+                    >
+                      <UserCircle className="h-5 w-5" />
+                      <span className="font-medium">{user?.firstName}</span>
+                    </button>
+                    
+                    {/* Dropdown menu */}
+                    {isUserMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 border border-gray-200">
+                        <Link
+                          to="/profile"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <User className="h-4 w-4 inline mr-2" />
+                          Mon profil
+                        </Link>
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            logout();
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                        >
+                          <LogOut className="h-4 w-4 inline mr-2" />
+                          Déconnexion
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-primary-600 border border-gray-300 rounded-lg transition"
+                >
+                  <User className="h-5 w-5" />
+                  <span className="font-medium">Connexion</span>
+                </Link>
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -65,15 +113,30 @@ export default function Layout({ children }) {
                 <Link to="/hotels" className="text-gray-700 hover:text-primary-600 font-medium">
                   Hôtels
                 </Link>
-                <Link to="/trips" className="text-gray-700 hover:text-primary-600 font-medium">
-                  Mes voyages
-                </Link>
-                <Link to="/alerts" className="text-gray-700 hover:text-primary-600 font-medium">
-                  Alertes prix
-                </Link>
-                <button className="btn btn-primary w-full mt-4">
-                  Connexion
-                </button>
+                {isAuthenticated && (
+                  <>
+                    <Link to="/trips" className="text-gray-700 hover:text-primary-600 font-medium">
+                      Mes voyages
+                    </Link>
+                    <Link to="/alerts" className="text-gray-700 hover:text-primary-600 font-medium">
+                      Alertes prix
+                    </Link>
+                    <Link to="/profile" className="text-gray-700 hover:text-primary-600 font-medium">
+                      Mon profil
+                    </Link>
+                    <button
+                      onClick={logout}
+                      className="btn bg-red-50 text-red-600 hover:bg-red-100 w-full mt-4"
+                    >
+                      Déconnexion
+                    </button>
+                  </>
+                )}
+                {!isAuthenticated && (
+                  <Link to="/login" className="btn btn-primary w-full mt-4">
+                    Connexion
+                  </Link>
+                )}
               </div>
             </div>
           )}
