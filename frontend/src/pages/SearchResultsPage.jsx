@@ -23,6 +23,8 @@ export default function SearchResultsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState("aiScore");
+  const [maxBudget, setMaxBudget] = useState(1000);
+  const [stopsFilter, setStopsFilter] = useState("any"); // "any" | "direct" | "1" | "2plus"
 
   const origin = searchParams.get("origin");
   const destination = searchParams.get("destination");
@@ -71,23 +73,6 @@ export default function SearchResultsPage() {
     }
   }, [origin, destination, departureDate, returnDate, passengers, cabinClass]);
 
-  // Tri des vols
-  const sortedFlights = [...flights].sort((a, b) => {
-    switch (sortBy) {
-      case "aiScore":
-        return (b.aiScore || 0) - (a.aiScore || 0);
-      case "price":
-        return a.price.total - b.price.total;
-      case "duration":
-        return (
-          parseDuration(a.outbound.duration) -
-          parseDuration(b.outbound.duration)
-        );
-      default:
-        return 0;
-    }
-  });
-
   // Helper pour parser la durée ISO (PT8H30M)
   const parseDuration = (duration) => {
     if (!duration) return 0;
@@ -104,6 +89,43 @@ export default function SearchResultsPage() {
     const minutes = totalMinutes % 60;
     return `${hours}h${minutes > 0 ? ` ${minutes}m` : ""}`;
   };
+
+  // Tri des vols
+  const sortedFlights = [...flights].sort((a, b) => {
+    switch (sortBy) {
+      case "aiScore":
+        return (b.aiScore || 0) - (a.aiScore || 0);
+      case "price": {
+        const priceA = Number(a.price?.total ?? a.price ?? 0);
+        const priceB = Number(b.price?.total ?? b.price ?? 0);
+        return priceA - priceB;
+      }
+      case "duration":
+        return (
+          parseDuration(a.outbound?.duration) -
+          parseDuration(b.outbound?.duration)
+        );
+      default:
+        return 0;
+    }
+  });
+
+  // Application des filtres Prix / Escales côté front
+  const filteredFlights = sortedFlights.filter((f) => {
+    // Prix max (cast en nombre pour éviter les comparaisons string)
+    const totalPrice = Number(f.price?.total ?? f.price ?? 0);
+    if (Number.isFinite(totalPrice) && totalPrice > maxBudget) return false;
+
+    // Escales (on regarde l'aller uniquement pour la lisibilité)
+    const stops = f.outbound?.stops ?? 0;
+    if (stopsFilter === "direct" && stops !== 0) return false;
+    if (stopsFilter === "1" && stops !== 1) return false;
+    if (stopsFilter === "2plus" && stops < 2) return false;
+
+    return true;
+  });
+
+  const hasBackendFlights = sortedFlights.length > 0;
 
   // Helper pour obtenir le badge de recommandation
   const getRecommendationBadge = (level) => {
@@ -205,7 +227,9 @@ export default function SearchResultsPage() {
     },
   ];
 
-  const displayFlights = sortedFlights.length > 0 ? sortedFlights : mockFlights;
+  // Si on a des vols du backend, on n'affiche que ceux qui passent les filtres.
+  // Si aucun vol backend, on garde les mocks de démo.
+  const displayFlights = hasBackendFlights ? filteredFlights : mockFlights;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -316,10 +340,20 @@ export default function SearchResultsPage() {
               {/* Prix */}
               <div>
                 <label className="label">Prix maximum</label>
-                <input type="range" min="0" max="1000" className="w-full" />
+                <input
+                  type="range"
+                  min="50"
+                  max="1000"
+                  step="10"
+                  value={maxBudget}
+                  onChange={(e) => setMaxBudget(Number(e.target.value))}
+                  className="w-full"
+                />
                 <div className="flex justify-between text-sm text-gray-600 mt-1">
-                  <span>0€</span>
-                  <span>1000€</span>
+                  <span>50€</span>
+                  <span>
+                    {Number.isFinite(maxBudget) ? `${maxBudget}€` : "—"}
+                  </span>
                 </div>
               </div>
 
@@ -328,15 +362,36 @@ export default function SearchResultsPage() {
                 <label className="label">Escales</label>
                 <div className="space-y-2">
                   <label className="flex items-center space-x-2">
-                    <input type="checkbox" className="rounded" defaultChecked />
+                    <input
+                      type="checkbox"
+                      className="rounded"
+                      checked={stopsFilter === "direct"}
+                      onChange={(e) =>
+                        setStopsFilter(e.target.checked ? "direct" : "any")
+                      }
+                    />
                     <span className="text-sm">Direct</span>
                   </label>
                   <label className="flex items-center space-x-2">
-                    <input type="checkbox" className="rounded" />
+                    <input
+                      type="checkbox"
+                      className="rounded"
+                      checked={stopsFilter === "1"}
+                      onChange={(e) =>
+                        setStopsFilter(e.target.checked ? "1" : "any")
+                      }
+                    />
                     <span className="text-sm">1 escale</span>
                   </label>
                   <label className="flex items-center space-x-2">
-                    <input type="checkbox" className="rounded" />
+                    <input
+                      type="checkbox"
+                      className="rounded"
+                      checked={stopsFilter === "2plus"}
+                      onChange={(e) =>
+                        setStopsFilter(e.target.checked ? "2plus" : "any")
+                      }
+                    />
                     <span className="text-sm">2+ escales</span>
                   </label>
                 </div>
@@ -352,6 +407,11 @@ export default function SearchResultsPage() {
                 {displayFlights.length > 1 ? "s" : ""} trouvé
                 {displayFlights.length > 1 ? "s" : ""}
               </h2>
+              {hasBackendFlights && filteredFlights.length === 0 && (
+                <p className="text-sm text-gray-500 ml-4">
+                  Aucun vol ne correspond à vos filtres (prix/escales).
+                </p>
+              )}
               {sortedFlights.length > 0 && (
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
                   <Sparkles className="h-4 w-4 text-primary-600" />

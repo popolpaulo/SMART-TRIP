@@ -60,14 +60,8 @@ class SkyscannerService {
         "Skyscanner API error:",
         error.response?.data || error.message
       );
-
-      // Si pas de clé API configurée, retourner des données de test
-      if (!this.apiKey || this.apiKey === "votre_cle_skyscanner") {
-        logger.warn("Skyscanner API not configured, returning mock data");
-        return this.getMockFlightData(searchParams);
-      }
-
-      throw error;
+      logger.warn("Using Skyscanner mock data fallback");
+      return this.getMockFlightData(searchParams);
     }
   }
 

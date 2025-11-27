@@ -111,13 +111,9 @@ class AmadeusService {
         error.response?.data || error.message
       );
 
-      // Si pas de clé API configurée, retourner des données de test
-      if (!this.apiKey || this.apiKey === "8APwrkHoplAj58exqQnxlI0OBCLtZegT") {
-        logger.warn("Amadeus API not configured, returning mock data");
-        return this.getMockFlightData(searchParams);
-      }
-
-      throw error;
+      // Forcer mock si pas de clé valide OU toute erreur réseau/API
+      logger.warn("Using Amadeus mock data fallback");
+      return this.getMockFlightData(searchParams);
     }
   }
 
