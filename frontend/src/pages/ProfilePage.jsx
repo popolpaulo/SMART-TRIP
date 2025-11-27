@@ -22,7 +22,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [activeTab, setActiveTab] = useState("info");
-  
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -47,7 +47,7 @@ export default function ProfilePage() {
   const loadProfile = async () => {
     setLoading(true);
     const result = await getProfile();
-    
+
     if (result.success && result.user) {
       setFormData({
         firstName: result.user.firstName || "",
@@ -80,7 +80,10 @@ export default function ProfilePage() {
       setMessage({ type: "success", text: "Profil mis à jour avec succès !" });
       setTimeout(() => setMessage({ type: "", text: "" }), 3000);
     } else {
-      setMessage({ type: "error", text: result.error || "Erreur lors de la mise à jour" });
+      setMessage({
+        type: "error",
+        text: result.error || "Erreur lors de la mise à jour",
+      });
     }
 
     setSaving(false);
@@ -91,7 +94,9 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mb-4"></div>
-          <p className="text-xl font-semibold text-gray-700">Chargement du profil...</p>
+          <p className="text-xl font-semibold text-gray-700">
+            Chargement du profil...
+          </p>
         </div>
       </div>
     );
@@ -184,7 +189,10 @@ export default function ProfilePage() {
                         className="input pl-10"
                         value={formData.firstName}
                         onChange={(e) =>
-                          setFormData({ ...formData, firstName: e.target.value })
+                          setFormData({
+                            ...formData,
+                            firstName: e.target.value,
+                          })
                         }
                       />
                     </div>
@@ -243,7 +251,10 @@ export default function ProfilePage() {
                         className="input pl-10"
                         value={formData.dateOfBirth}
                         onChange={(e) =>
-                          setFormData({ ...formData, dateOfBirth: e.target.value })
+                          setFormData({
+                            ...formData,
+                            dateOfBirth: e.target.value,
+                          })
                         }
                       />
                     </div>
@@ -258,7 +269,10 @@ export default function ProfilePage() {
                         className="input pl-10"
                         value={formData.nationality}
                         onChange={(e) =>
-                          setFormData({ ...formData, nationality: e.target.value })
+                          setFormData({
+                            ...formData,
+                            nationality: e.target.value,
+                          })
                         }
                       >
                         <option value="">Sélectionner</option>
@@ -292,14 +306,17 @@ export default function ProfilePage() {
                       className="input"
                       value={formData.budgetRange}
                       onChange={(e) =>
-                        setFormData({ ...formData, budgetRange: e.target.value })
+                        setFormData({
+                          ...formData,
+                          budgetRange: e.target.value,
+                        })
                       }
                     >
                       <option value="">Sélectionner</option>
-                      <option value="low">Économique (< 500€)</option>
+                      <option value="low">Économique (&lt; 500€)</option>
                       <option value="medium">Standard (500-1500€)</option>
                       <option value="high">Premium (1500-3000€)</option>
-                      <option value="luxury">Luxe (> 3000€)</option>
+                      <option value="luxury">Luxe (&gt; 3000€)</option>
                     </select>
                   </div>
 
@@ -313,12 +330,17 @@ export default function ProfilePage() {
                       className="input"
                       value={formData.preferredClass}
                       onChange={(e) =>
-                        setFormData({ ...formData, preferredClass: e.target.value })
+                        setFormData({
+                          ...formData,
+                          preferredClass: e.target.value,
+                        })
                       }
                     >
                       <option value="">Sélectionner</option>
                       <option value="economy">Économique</option>
-                      <option value="premium_economy">Économique Premium</option>
+                      <option value="premium_economy">
+                        Économique Premium
+                      </option>
                       <option value="business">Affaires</option>
                       <option value="first">Première Classe</option>
                     </select>
@@ -331,7 +353,10 @@ export default function ProfilePage() {
                       className="input"
                       value={formData.comfortLevel}
                       onChange={(e) =>
-                        setFormData({ ...formData, comfortLevel: e.target.value })
+                        setFormData({
+                          ...formData,
+                          comfortLevel: e.target.value,
+                        })
                       }
                     >
                       <option value="">Sélectionner</option>
@@ -351,7 +376,10 @@ export default function ProfilePage() {
                       className="input"
                       value={formData.travelStyle}
                       onChange={(e) =>
-                        setFormData({ ...formData, travelStyle: e.target.value })
+                        setFormData({
+                          ...formData,
+                          travelStyle: e.target.value,
+                        })
                       }
                     >
                       <option value="">Sélectionner</option>
@@ -372,7 +400,10 @@ export default function ProfilePage() {
                       className="input"
                       value={formData.maxStops}
                       onChange={(e) =>
-                        setFormData({ ...formData, maxStops: parseInt(e.target.value) })
+                        setFormData({
+                          ...formData,
+                          maxStops: parseInt(e.target.value),
+                        })
                       }
                     />
                   </div>
@@ -384,7 +415,10 @@ export default function ProfilePage() {
                       className="input"
                       value={formData.seatPreference}
                       onChange={(e) =>
-                        setFormData({ ...formData, seatPreference: e.target.value })
+                        setFormData({
+                          ...formData,
+                          seatPreference: e.target.value,
+                        })
                       }
                     >
                       <option value="">Sélectionner</option>
@@ -401,7 +435,10 @@ export default function ProfilePage() {
                       className="input"
                       value={formData.mealPreference}
                       onChange={(e) =>
-                        setFormData({ ...formData, mealPreference: e.target.value })
+                        setFormData({
+                          ...formData,
+                          mealPreference: e.target.value,
+                        })
                       }
                     >
                       <option value="">Aucune restriction</option>
