@@ -17,49 +17,24 @@ class FlightAggregatorService {
     const startTime = Date.now();
 
     try {
-      // 1. Rechercher en parallèle sur toutes les sources
+      // 1. Rechercher uniquement sur Amadeus (API réelle)
       const userId = user?.id || "anonymous";
       logger.info(`Starting smart flight search for user ${userId}`);
 
-      const [amadeusResults, skyscannerResults] = await Promise.allSettled([
-        amadeusService.searchFlights(searchParams),
-        skyscannerService.searchFlights(searchParams),
-      ]);
+      const amadeusResults = await amadeusService.searchFlights(searchParams);
 
-      // 2. Combiner les résultats
-      const allFlights = [];
+      // 2. Combiner les résultats (uniquement Amadeus, pas de mock)
+      const allFlights = amadeusResults || [];
 
-      if (amadeusResults.status === "fulfilled") {
-        allFlights.push(...amadeusResults.value);
-      } else {
-        logger.warn("Amadeus search failed:", amadeusResults.reason?.message);
-      }
-
-      if (skyscannerResults.status === "fulfilled") {
-        allFlights.push(...skyscannerResults.value);
-      } else {
-        logger.warn(
-          "Skyscanner search failed:",
-          skyscannerResults.reason?.message
-        );
-      }
-
-      logger.info(
-        `Found ${allFlights.length} flights from ${
-          amadeusResults.status === "fulfilled"
-            ? 1
-            : 0 + skyscannerResults.status === "fulfilled"
-            ? 1
-            : 0
-        } sources`
-      );
+      logger.info(`Found ${allFlights.length} flights from Amadeus`);
 
       if (allFlights.length === 0) {
         throw new Error("Aucun vol trouvé sur les sources disponibles");
       }
 
-      // 3. Dédupliquer les vols similaires
-      const uniqueFlights = this.deduplicateFlights(allFlights);
+      // 3. Dédupliquer les vols similaires (désactivé temporairement pour garder tous les vols)
+      // const uniqueFlights = this.deduplicateFlights(allFlights);
+      const uniqueFlights = allFlights; // Garder tous les vols sans déduplication
 
       // 4. Scorer avec l'IA
       const scoredFlights = await aiService.scoreFlights(
@@ -92,10 +67,7 @@ class FlightAggregatorService {
         flights: scoredFlights,
         meta: {
           totalResults: scoredFlights.length,
-          sources: [
-            amadeusResults.status === "fulfilled" ? "amadeus" : null,
-            skyscannerResults.status === "fulfilled" ? "skyscanner" : null,
-          ].filter(Boolean),
+          sources: ["amadeus"],
           searchTime: duration,
           timestamp: new Date().toISOString(),
         },

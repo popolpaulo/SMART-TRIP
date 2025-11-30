@@ -22,9 +22,11 @@ export default function SearchResultsPage() {
   const [flights, setFlights] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sortBy, setSortBy] = useState("aiScore");
-  const [maxBudget, setMaxBudget] = useState(1000);
-  const [stopsFilter, setStopsFilter] = useState("any"); // "any" | "direct" | "1" | "2plus"
+  const [sortBy, setSortBy] = useState("best"); // best | price | duration
+  const [maxBudget, setMaxBudget] = useState(10000);
+  const [minBudget, setMinBudget] = useState(0);
+  const [selectedAirlines, setSelectedAirlines] = useState([]); // Filtre par compagnies
+  const [selectedStops, setSelectedStops] = useState([]); // Filtre par nombre d'escales [0, 1, 2]
 
   const origin = searchParams.get("origin");
   const destination = searchParams.get("destination");
@@ -90,11 +92,43 @@ export default function SearchResultsPage() {
     return `${hours}h${minutes > 0 ? ` ${minutes}m` : ""}`;
   };
 
+  // Filtrer par compagnies, escales et prix
+  const filteredFlights = flights.filter((f) => {
+    // Filtre par compagnie
+    if (selectedAirlines.length > 0) {
+      const carrier = f.validatingAirlineCodes?.[0] || f.outbound?.airline;
+      if (!selectedAirlines.includes(carrier)) return false;
+    }
+    
+    // Filtre par nombre d'escales
+    if (selectedStops.length > 0) {
+      const stops = f.outbound?.stops ?? 0;
+      if (!selectedStops.includes(stops)) return false;
+    }
+    
+    // Filtre par plage de prix
+    const totalPrice = Number(f.price?.total ?? f.price ?? 0);
+    if (Number.isFinite(totalPrice) && (totalPrice < minBudget || totalPrice > maxBudget)) return false;
+    
+    return true;
+  });
+
   // Tri des vols
-  const sortedFlights = [...flights].sort((a, b) => {
+  const sortedFlights = [...filteredFlights].sort((a, b) => {
     switch (sortBy) {
-      case "aiScore":
-        return (b.aiScore || 0) - (a.aiScore || 0);
+      case "best": {
+        // Meilleur rapport qualité/prix (durée courte + prix bas)
+        const priceA = Number(a.price?.total ?? a.price ?? 0);
+        const priceB = Number(b.price?.total ?? b.price ?? 0);
+        const durationA = parseDuration(a.outbound?.duration);
+        const durationB = parseDuration(b.outbound?.duration);
+        
+        // Normaliser et combiner (60% prix, 40% durée)
+        const scoreA = (priceA / 1000) * 0.6 + (durationA / 60) * 0.4;
+        const scoreB = (priceB / 1000) * 0.6 + (durationB / 60) * 0.4;
+        
+        return scoreA - scoreB;
+      }
       case "price": {
         const priceA = Number(a.price?.total ?? a.price ?? 0);
         const priceB = Number(b.price?.total ?? b.price ?? 0);
@@ -110,22 +144,19 @@ export default function SearchResultsPage() {
     }
   });
 
-  // Application des filtres Prix / Escales côté front
-  const filteredFlights = sortedFlights.filter((f) => {
-    // Prix max (cast en nombre pour éviter les comparaisons string)
-    const totalPrice = Number(f.price?.total ?? f.price ?? 0);
-    if (Number.isFinite(totalPrice) && totalPrice > maxBudget) return false;
-
-    // Escales (on regarde l'aller uniquement pour la lisibilité)
-    const stops = f.outbound?.stops ?? 0;
-    if (stopsFilter === "direct" && stops !== 0) return false;
-    if (stopsFilter === "1" && stops !== 1) return false;
-    if (stopsFilter === "2plus" && stops < 2) return false;
-
-    return true;
-  });
-
   const hasBackendFlights = sortedFlights.length > 0;
+
+  // Extraire les compagnies disponibles pour le filtre
+  const availableAirlines = Array.from(
+    new Set(
+      flights
+        .flatMap((f) => [
+          f.validatingAirlineCodes?.[0],
+          f.outbound?.airline,
+        ])
+        .filter(Boolean)
+    )
+  );
 
   // Helper pour obtenir le badge de recommandation
   const getRecommendationBadge = (level) => {
@@ -257,23 +288,19 @@ export default function SearchResultsPage() {
             <div className="flex items-center space-x-2 bg-white/20 rounded-lg px-4 py-2 backdrop-blur">
               <Sparkles className="h-5 w-5" />
               <span className="text-sm">
-                🧠 IA activée : {sortedFlights.length} vols analysés et notés
-                selon vos préférences
+                {sortedFlights.length} vols trouvés pour votre recherche
               </span>
             </div>
           )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Filtres avec IA Insights */}
+          {/* Filtres */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-md p-6 sticky top-24 space-y-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <Brain className="h-5 w-5 text-primary-600" />
-                <h3 className="text-lg font-semibold">Filtres IA</h3>
-              </div>
+              <h3 className="text-lg font-semibold">Filtres</h3>
 
-              {/* Tri par score IA */}
+              {/* Tri */}
               <div>
                 <label className="label">Trier par</label>
                 <select
@@ -281,79 +308,82 @@ export default function SearchResultsPage() {
                   onChange={(e) => setSortBy(e.target.value)}
                   className="input w-full"
                 >
-                  <option value="aiScore">🧠 Meilleur score IA</option>
+                  <option value="best">🏆 Meilleur rapport qualité/prix</option>
                   <option value="price">💰 Prix le plus bas</option>
                   <option value="duration">⚡ Vol le plus rapide</option>
                 </select>
               </div>
 
-              {/* Stats IA */}
-              {sortedFlights.length > 0 && (
-                <div className="bg-gradient-to-br from-primary-50 to-purple-50 rounded-lg p-4 border border-primary-200">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <Zap className="h-4 w-4 text-primary-600" />
-                    <span className="font-semibold text-sm">Analyse IA</span>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Prix moyen:</span>
-                      <span className="font-bold">
-                        {Math.round(
-                          sortedFlights.reduce(
-                            (sum, f) => sum + f.price.total,
-                            0
-                          ) / sortedFlights.length
-                        )}
-                        €
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Meilleur score:</span>
-                      <span className="font-bold text-green-600">
-                        {Math.max(...sortedFlights.map((f) => f.aiScore || 0))}
-                        /100
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Vols directs:</span>
-                      <span className="font-bold">
-                        {
-                          sortedFlights.filter((f) => f.outbound.stops === 0)
-                            .length
-                        }
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Prédiction de prix IA */}
+              {/* Compagnies */}
               <div>
-                <PricePredictionCard
-                  origin={originCode}
-                  destination={destinationCode}
-                  departureDate={departureDate}
-                  cabinClass={cabinClass}
-                />
+                <label className="label">Compagnies</label>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {availableAirlines.map((code) => {
+                    const info = getAirlineInfo(code);
+                    return (
+                      <label
+                        key={code}
+                        className="flex items-center space-x-2 hover:bg-gray-50 p-1 rounded"
+                      >
+                        <input
+                          type="checkbox"
+                          className="rounded"
+                          checked={selectedAirlines.includes(code)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedAirlines([...selectedAirlines, code]);
+                            } else {
+                              setSelectedAirlines(
+                                selectedAirlines.filter((c) => c !== code)
+                              );
+                            }
+                          }}
+                        />
+                        <span className="text-sm">{info.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {selectedAirlines.length > 0 && (
+                  <button
+                    onClick={() => setSelectedAirlines([])}
+                    className="text-xs text-primary-600 hover:underline mt-2"
+                  >
+                    Tout effacer
+                  </button>
+                )}
               </div>
 
               {/* Prix */}
               <div>
-                <label className="label">Prix maximum</label>
-                <input
-                  type="range"
-                  min="50"
-                  max="1000"
-                  step="10"
-                  value={maxBudget}
-                  onChange={(e) => setMaxBudget(Number(e.target.value))}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-sm text-gray-600 mt-1">
-                  <span>50€</span>
-                  <span>
-                    {Number.isFinite(maxBudget) ? `${maxBudget}€` : "—"}
-                  </span>
+                <label className="label">
+                  Fourchette de prix: {minBudget}€ - {maxBudget}€
+                </label>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-gray-600">Minimum</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="5000"
+                      step="50"
+                      value={minBudget}
+                      onChange={(e) => setMinBudget(Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600">Maximum</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="10000"
+                      step="50"
+                      value={maxBudget}
+                      onChange={(e) => setMaxBudget(Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -365,10 +395,14 @@ export default function SearchResultsPage() {
                     <input
                       type="checkbox"
                       className="rounded"
-                      checked={stopsFilter === "direct"}
-                      onChange={(e) =>
-                        setStopsFilter(e.target.checked ? "direct" : "any")
-                      }
+                      checked={selectedStops.includes(0)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedStops([...selectedStops, 0]);
+                        } else {
+                          setSelectedStops(selectedStops.filter((s) => s !== 0));
+                        }
+                      }}
                     />
                     <span className="text-sm">Direct</span>
                   </label>
@@ -376,10 +410,14 @@ export default function SearchResultsPage() {
                     <input
                       type="checkbox"
                       className="rounded"
-                      checked={stopsFilter === "1"}
-                      onChange={(e) =>
-                        setStopsFilter(e.target.checked ? "1" : "any")
-                      }
+                      checked={selectedStops.includes(1)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedStops([...selectedStops, 1]);
+                        } else {
+                          setSelectedStops(selectedStops.filter((s) => s !== 1));
+                        }
+                      }}
                     />
                     <span className="text-sm">1 escale</span>
                   </label>
@@ -387,14 +425,36 @@ export default function SearchResultsPage() {
                     <input
                       type="checkbox"
                       className="rounded"
-                      checked={stopsFilter === "2plus"}
-                      onChange={(e) =>
-                        setStopsFilter(e.target.checked ? "2plus" : "any")
-                      }
+                      checked={selectedStops.includes(2)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedStops([...selectedStops, 2]);
+                        } else {
+                          setSelectedStops(selectedStops.filter((s) => s !== 2));
+                        }
+                      }}
                     />
                     <span className="text-sm">2+ escales</span>
                   </label>
                 </div>
+                {selectedStops.length > 0 && (
+                  <button
+                    onClick={() => setSelectedStops([])}
+                    className="text-xs text-primary-600 hover:underline mt-2"
+                  >
+                    Tout effacer
+                  </button>
+                )}
+              </div>
+
+              {/* Prédiction de prix */}
+              <div>
+                <PricePredictionCard
+                  origin={originCode}
+                  destination={destinationCode}
+                  departureDate={departureDate}
+                  cabinClass={cabinClass}
+                />
               </div>
             </div>
           </div>
@@ -470,8 +530,19 @@ export default function SearchResultsPage() {
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center space-x-4">
-                            <div className="text-3xl">
-                              {airlineInfo?.logo || "✈️"}
+                            {airlineInfo?.logo ? (
+                              <img 
+                                src={airlineInfo.logo} 
+                                alt={airlineInfo.name}
+                                className="w-12 h-12 object-contain"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'flex';
+                                }}
+                              />
+                            ) : null}
+                            <div className="w-12 h-12 bg-gray-100 rounded-lg items-center justify-center text-2xl" style={{display: airlineInfo?.logo ? 'none' : 'flex'}}>
+                              ✈️
                             </div>
                             <div>
                               <div className="font-semibold text-lg">
