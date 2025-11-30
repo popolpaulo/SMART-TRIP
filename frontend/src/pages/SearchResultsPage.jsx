@@ -26,7 +26,8 @@ export default function SearchResultsPage() {
   const [maxBudget, setMaxBudget] = useState(10000);
   const [minBudget, setMinBudget] = useState(0);
   const [selectedAirlines, setSelectedAirlines] = useState([]); // Filtre par compagnies
-  const [selectedStops, setSelectedStops] = useState([]); // Filtre par nombre d'escales [0, 1, 2]
+  const [selectedStopsOutbound, setSelectedStopsOutbound] = useState([]); // Filtre escales aller
+  const [selectedStopsInbound, setSelectedStopsInbound] = useState([]); // Filtre escales retour
 
   const origin = searchParams.get("origin");
   const destination = searchParams.get("destination");
@@ -34,6 +35,7 @@ export default function SearchResultsPage() {
   const returnDate = searchParams.get("returnDate");
   const passengers = parseInt(searchParams.get("passengers") || "1");
   const cabinClass = searchParams.get("class") || "economy";
+  const directFlightsOnly = searchParams.get("directFlightsOnly") === "true";
 
   // Normalise les entrées pour obtenir des codes IATA (ex: "Paris (CDG)" -> "CDG")
   const extractIata = (val) => {
@@ -59,6 +61,7 @@ export default function SearchResultsPage() {
           returnDate,
           adults: passengers,
           cabinClass,
+          nonStop: directFlightsOnly,
         });
         setFlights(data.flights || []);
         setError(null);
@@ -73,7 +76,7 @@ export default function SearchResultsPage() {
     if (origin && destination && departureDate) {
       fetchFlights();
     }
-  }, [origin, destination, departureDate, returnDate, passengers, cabinClass]);
+  }, [origin, destination, departureDate, returnDate, passengers, cabinClass, directFlightsOnly]);
 
   // Helper pour parser la durée ISO (PT8H30M)
   const parseDuration = (duration) => {
@@ -92,6 +95,11 @@ export default function SearchResultsPage() {
     return `${hours}h${minutes > 0 ? ` ${minutes}m` : ""}`;
   };
 
+  // Extraire les compagnies uniques des vols trouvés
+  const availableAirlines = [...new Set(
+    flights.map(f => f.validatingAirlineCodes?.[0] || f.outbound?.airline).filter(Boolean)
+  )];
+
   // Filtrer par compagnies, escales et prix
   const filteredFlights = flights.filter((f) => {
     // Filtre par compagnie
@@ -100,15 +108,22 @@ export default function SearchResultsPage() {
       if (!selectedAirlines.includes(carrier)) return false;
     }
     
-    // Filtre par nombre d'escales
-    if (selectedStops.length > 0) {
+    // Filtre par nombre d'escales ALLER
+    if (selectedStopsOutbound.length > 0) {
       const stops = f.outbound?.stops ?? 0;
-      // Gérer "2+ escales" : si 2 est sélectionné, inclure tous les vols avec >= 2 escales
-      const matchesFilter = selectedStops.some(selectedStop => {
-        if (selectedStop === 2) {
-          return stops >= 2; // 2+ escales
-        }
-        return stops === selectedStop; // 0 ou 1 escale exactement
+      const matchesFilter = selectedStopsOutbound.some(selectedStop => {
+        if (selectedStop === 2) return stops >= 2;
+        return stops === selectedStop;
+      });
+      if (!matchesFilter) return false;
+    }
+    
+    // Filtre par nombre d'escales RETOUR (si vol aller-retour)
+    if (selectedStopsInbound.length > 0 && f.inbound) {
+      const stops = f.inbound?.stops ?? 0;
+      const matchesFilter = selectedStopsInbound.some(selectedStop => {
+        if (selectedStop === 2) return stops >= 2;
+        return stops === selectedStop;
       });
       if (!matchesFilter) return false;
     }
@@ -154,19 +169,7 @@ export default function SearchResultsPage() {
   // Vérifier si on a des vols de l'API (avant filtres)
   const hasBackendFlights = flights.length > 0;
 
-  // Extraire les compagnies disponibles pour le filtre
-  const availableAirlines = Array.from(
-    new Set(
-      flights
-        .flatMap((f) => [
-          f.validatingAirlineCodes?.[0],
-          f.outbound?.airline,
-        ])
-        .filter(Boolean)
-    )
-  );
-
-  // Identifier les 3 meilleurs vols
+  // Fonction pour déterminer les badges (meilleurs vols par catégorie)
   const getBestFlightsBadges = (flights) => {
     if (flights.length === 0) return {};
     
@@ -392,20 +395,20 @@ export default function SearchResultsPage() {
                 </div>
               </div>
 
-              {/* Escales */}
+              {/* Escales Vol Aller */}
               <div>
-                <label className="label">Escales</label>
+                <label className="label">Escales Vol Aller</label>
                 <div className="space-y-2">
                   <label className="flex items-center space-x-2">
                     <input
                       type="checkbox"
                       className="rounded"
-                      checked={selectedStops.includes(0)}
+                      checked={selectedStopsOutbound.includes(0)}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedStops([...selectedStops, 0]);
+                          setSelectedStopsOutbound([...selectedStopsOutbound, 0]);
                         } else {
-                          setSelectedStops(selectedStops.filter((s) => s !== 0));
+                          setSelectedStopsOutbound(selectedStopsOutbound.filter((s) => s !== 0));
                         }
                       }}
                     />
@@ -415,12 +418,12 @@ export default function SearchResultsPage() {
                     <input
                       type="checkbox"
                       className="rounded"
-                      checked={selectedStops.includes(1)}
+                      checked={selectedStopsOutbound.includes(1)}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedStops([...selectedStops, 1]);
+                          setSelectedStopsOutbound([...selectedStopsOutbound, 1]);
                         } else {
-                          setSelectedStops(selectedStops.filter((s) => s !== 1));
+                          setSelectedStopsOutbound(selectedStopsOutbound.filter((s) => s !== 1));
                         }
                       }}
                     />
@@ -430,27 +433,89 @@ export default function SearchResultsPage() {
                     <input
                       type="checkbox"
                       className="rounded"
-                      checked={selectedStops.includes(2)}
+                      checked={selectedStopsOutbound.includes(2)}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedStops([...selectedStops, 2]);
+                          setSelectedStopsOutbound([...selectedStopsOutbound, 2]);
                         } else {
-                          setSelectedStops(selectedStops.filter((s) => s !== 2));
+                          setSelectedStopsOutbound(selectedStopsOutbound.filter((s) => s !== 2));
                         }
                       }}
                     />
                     <span className="text-sm">2+ escales</span>
                   </label>
                 </div>
-                {selectedStops.length > 0 && (
+                {selectedStopsOutbound.length > 0 && (
                   <button
-                    onClick={() => setSelectedStops([])}
+                    onClick={() => setSelectedStopsOutbound([])}
                     className="text-xs text-primary-600 hover:underline mt-2"
                   >
                     Tout effacer
                   </button>
                 )}
               </div>
+
+              {/* Escales Vol Retour - Affiché seulement pour aller-retour */}
+              {returnDate && (
+                <div>
+                  <label className="label">Escales Vol Retour</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        className="rounded"
+                        checked={selectedStopsInbound.includes(0)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedStopsInbound([...selectedStopsInbound, 0]);
+                          } else {
+                            setSelectedStopsInbound(selectedStopsInbound.filter((s) => s !== 0));
+                          }
+                        }}
+                      />
+                      <span className="text-sm">Direct</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        className="rounded"
+                        checked={selectedStopsInbound.includes(1)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedStopsInbound([...selectedStopsInbound, 1]);
+                          } else {
+                            setSelectedStopsInbound(selectedStopsInbound.filter((s) => s !== 1));
+                          }
+                        }}
+                      />
+                      <span className="text-sm">1 escale</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        className="rounded"
+                        checked={selectedStopsInbound.includes(2)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedStopsInbound([...selectedStopsInbound, 2]);
+                          } else {
+                            setSelectedStopsInbound(selectedStopsInbound.filter((s) => s !== 2));
+                          }
+                        }}
+                      />
+                      <span className="text-sm">2+ escales</span>
+                    </label>
+                  </div>
+                  {selectedStopsInbound.length > 0 && (
+                    <button
+                      onClick={() => setSelectedStopsInbound([])}
+                      className="text-xs text-primary-600 hover:underline mt-2"
+                    >
+                      Tout effacer
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Prédiction de prix */}
               <div>
@@ -474,8 +539,8 @@ export default function SearchResultsPage() {
               </h2>
             </div>
 
-            {/* IA Insights dynamiques */}
-            {displayFlights.length > 0 && (
+            {/* IA Insights dynamiques - Temporairement masqué */}
+            {false && displayFlights.length > 0 && (
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-5 mb-6">
                 <div className="flex items-start space-x-3">
                   <div className="bg-blue-500 rounded-full p-2">

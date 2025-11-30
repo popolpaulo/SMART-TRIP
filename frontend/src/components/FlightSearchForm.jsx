@@ -166,6 +166,7 @@ export default function FlightSearchForm() {
     returnDate: "",
     passengers: 1,
     class: "economy",
+    directFlightsOnly: false,
   });
 
   // États pour l'autocomplétion
@@ -174,6 +175,7 @@ export default function FlightSearchForm() {
   const [showOriginSuggestions, setShowOriginSuggestions] = useState(false);
   const [showDestinationSuggestions, setShowDestinationSuggestions] =
     useState(false);
+  const [isSwapping, setIsSwapping] = useState(false);
 
   const originInputRef = useRef(null);
   const destinationInputRef = useRef(null);
@@ -289,11 +291,14 @@ export default function FlightSearchForm() {
       passengers: String(searchData.passengers),
       class: searchData.class,
       tripType,
+      ...(searchData.directFlightsOnly ? { directFlightsOnly: 'true' } : {}),
     });
     navigate(`/search?${params.toString()}`);
   };
 
   const swapLocations = () => {
+    setIsSwapping(true);
+    setTimeout(() => setIsSwapping(false), 600);
     setSearchData((prev) => ({
       ...prev,
       origin: prev.destination,
@@ -338,131 +343,59 @@ export default function FlightSearchForm() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        {/* Origine et Destination */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {/* Origine */}
-          <div className="relative">
-            <label className="label">
-              <MapPin className="inline h-4 w-4 mr-1" />
-              Ville de départ
-            </label>
-            <div className="relative">
-              <input
-                ref={originInputRef}
-                type="text"
-                placeholder="Paris (CDG)"
-                value={searchData.origin}
-                onChange={(e) => handleOriginChange(e.target.value)}
-                onFocus={() =>
-                  searchData.origin.length >= 2 &&
-                  setShowOriginSuggestions(true)
-                }
-                className="input pl-10 text-gray-900"
-                required
-                autoComplete="off"
-                onBlur={() =>
-                  setTimeout(() => setShowOriginSuggestions(false), 150)
-                }
-              />
-              <Plane className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              {searchData.origin && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchData((prev) => ({ ...prev, origin: "" }));
-                    setShowOriginSuggestions(false);
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Suggestions d'origine */}
-            {showOriginSuggestions && originSuggestions.length > 0 && (
-              <div
-                ref={originDropdownRef}
-                className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-y-auto"
-              >
-                {originSuggestions.map((airport, index) => (
+        {/* Origine et Destination avec bouton swap centré */}
+        <div className="relative mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-0 md:gap-4 items-end">
+            {/* Origine */}
+            <div className="space-y-2 mb-4 md:mb-0">
+              <label className="block text-sm font-medium text-gray-700">
+                <MapPin className="inline h-4 w-4 mr-1" />
+                Ville de départ
+              </label>
+              <div className="relative">
+                <input
+                  ref={originInputRef}
+                  type="text"
+                  placeholder="Paris (CDG)"
+                  value={searchData.origin}
+                  onChange={(e) => handleOriginChange(e.target.value)}
+                  onFocus={() =>
+                    searchData.origin.length >= 2 &&
+                    setShowOriginSuggestions(true)
+                  }
+                  className="input pl-10 text-gray-900"
+                  required
+                  autoComplete="off"
+                  onBlur={() =>
+                    setTimeout(() => setShowOriginSuggestions(false), 150)
+                  }
+                />
+                <Plane className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                {searchData.origin && (
                   <button
-                    key={index}
                     type="button"
-                    onClick={() => selectOriginSuggestion(airport)}
-                    className="w-full px-4 py-3 text-left hover:bg-primary-50 transition-colors border-b border-gray-100 last:border-0 focus:bg-primary-50 focus:outline-none"
+                    onClick={() => {
+                      setSearchData((prev) => ({ ...prev, origin: "" }));
+                      setShowOriginSuggestions(false);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-semibold text-gray-900">
-                          {airport.city}
-                          <span className="ml-2 text-primary-600 font-bold">
-                            ({airport.code})
-                          </span>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {airport.airport} - {airport.country}
-                        </div>
-                      </div>
-                      <Plane className="h-5 w-5 text-gray-300" />
-                    </div>
+                    <X className="h-4 w-4" />
                   </button>
-                ))}
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Destination */}
-          <div className="relative">
-            <label className="label">
-              <MapPin className="inline h-4 w-4 mr-1" />
-              Destination
-            </label>
-            <div className="relative">
-              <input
-                ref={destinationInputRef}
-                type="text"
-                placeholder="New York (JFK)"
-                value={searchData.destination}
-                onChange={(e) => handleDestinationChange(e.target.value)}
-                onFocus={() =>
-                  searchData.destination.length >= 2 &&
-                  setShowDestinationSuggestions(true)
-                }
-                className="input pl-10 text-gray-900"
-                required
-                autoComplete="off"
-                onBlur={() =>
-                  setTimeout(() => setShowDestinationSuggestions(false), 150)
-                }
-              />
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              {searchData.destination && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchData((prev) => ({ ...prev, destination: "" }));
-                    setShowDestinationSuggestions(false);
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Suggestions de destination */}
-            {showDestinationSuggestions &&
-              destinationSuggestions.length > 0 && (
+              {/* Suggestions d'origine */}
+              {showOriginSuggestions && originSuggestions.length > 0 && (
                 <div
-                  ref={destinationDropdownRef}
-                  className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-y-auto"
+                  ref={originDropdownRef}
+                  className="absolute z-50 w-full md:w-[calc(50%-1rem)] mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-y-auto"
                 >
-                  {destinationSuggestions.map((airport, index) => (
+                  {originSuggestions.map((airport, index) => (
                     <button
                       key={index}
                       type="button"
-                      onClick={() => selectDestinationSuggestion(airport)}
+                      onClick={() => selectOriginSuggestion(airport)}
                       className="w-full px-4 py-3 text-left hover:bg-primary-50 transition-colors border-b border-gray-100 last:border-0 focus:bg-primary-50 focus:outline-none"
                     >
                       <div className="flex items-center justify-between">
@@ -477,30 +410,104 @@ export default function FlightSearchForm() {
                             {airport.airport} - {airport.country}
                           </div>
                         </div>
-                        <MapPin className="h-5 w-5 text-gray-300" />
+                        <Plane className="h-5 w-5 text-gray-300" />
                       </div>
                     </button>
                   ))}
                 </div>
               )}
+            </div>
 
-            {/* Bouton swap */}
+            {/* Bouton swap aligné avec les inputs */}
             <button
               type="button"
               onClick={swapLocations}
-              className="absolute -left-4 top-1/2 -translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:top-auto md:bottom-4 md:translate-y-0 bg-white border-2 border-primary-600 rounded-full p-2 text-primary-600 hover:bg-primary-50 transition z-10"
+              className="hidden md:flex items-center justify-center bg-white border-2 border-primary-600 rounded-full p-3 text-primary-600 hover:bg-primary-600 hover:text-white transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-110 mb-0"
               title="Inverser départ/arrivée"
             >
-              <ArrowRightLeft className="h-4 w-4" />
+              <ArrowRightLeft className={`h-5 w-5 transition-transform duration-600 ${isSwapping ? 'rotate-180' : ''}`} />
             </button>
+
+            {/* Destination */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                <MapPin className="inline h-4 w-4 mr-1" />
+                Destination
+              </label>
+              <div className="relative">
+                <input
+                  ref={destinationInputRef}
+                  type="text"
+                  placeholder="New York (JFK)"
+                  value={searchData.destination}
+                  onChange={(e) => handleDestinationChange(e.target.value)}
+                  onFocus={() =>
+                    searchData.destination.length >= 2 &&
+                    setShowDestinationSuggestions(true)
+                  }
+                  className="input pl-10 text-gray-900"
+                  required
+                  autoComplete="off"
+                  onBlur={() =>
+                    setTimeout(() => setShowDestinationSuggestions(false), 150)
+                  }
+                />
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                {searchData.destination && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchData((prev) => ({ ...prev, destination: "" }));
+                      setShowDestinationSuggestions(false);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Suggestions de destination */}
+              {showDestinationSuggestions &&
+                destinationSuggestions.length > 0 && (
+                  <div
+                    ref={destinationDropdownRef}
+                    className="absolute z-50 w-full md:w-[calc(50%-1rem)] right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-y-auto"
+                  >
+                    {destinationSuggestions.map((airport, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => selectDestinationSuggestion(airport)}
+                        className="w-full px-4 py-3 text-left hover:bg-primary-50 transition-colors border-b border-gray-100 last:border-0 focus:bg-primary-50 focus:outline-none"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold text-gray-900">
+                              {airport.city}
+                              <span className="ml-2 text-primary-600 font-bold">
+                                ({airport.code})
+                              </span>
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {airport.airport} - {airport.country}
+                            </div>
+                          </div>
+                          <MapPin className="h-5 w-5 text-gray-300" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+            </div>
           </div>
         </div>
 
         {/* Dates */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {/* Date de départ */}
-          <div>
-            <label className="label">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
               <Calendar className="inline h-4 w-4 mr-1" />
               Date de départ
             </label>
@@ -524,8 +531,8 @@ export default function FlightSearchForm() {
 
           {/* Date de retour */}
           {tripType === "roundtrip" && (
-            <div>
-              <label className="label">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
                 <Calendar className="inline h-4 w-4 mr-1" />
                 Date de retour
               </label>
@@ -555,8 +562,8 @@ export default function FlightSearchForm() {
         {/* Passagers et Classe */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {/* Nombre de passagers */}
-          <div>
-            <label className="label">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
               <Users className="inline h-4 w-4 mr-1" />
               Passagers
             </label>
@@ -568,10 +575,10 @@ export default function FlightSearchForm() {
                   passengers: parseInt(e.target.value),
                 }))
               }
-              className="input"
+              className="input text-gray-900 font-medium cursor-pointer"
             >
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                <option key={num} value={num}>
+                <option key={num} value={num} className="text-gray-900">
                   {num} passager{num > 1 ? "s" : ""}
                 </option>
               ))}
@@ -579,19 +586,21 @@ export default function FlightSearchForm() {
           </div>
 
           {/* Classe */}
-          <div>
-            <label className="label">Classe</label>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              ✈️ Classe
+            </label>
             <select
               value={searchData.class}
               onChange={(e) =>
                 setSearchData((prev) => ({ ...prev, class: e.target.value }))
               }
-              className="input"
+              className="input text-gray-900 font-medium cursor-pointer"
             >
-              <option value="economy">Économique</option>
-              <option value="premium">Premium Économique</option>
-              <option value="business">Affaires</option>
-              <option value="first">Première Classe</option>
+              <option value="economy" className="text-gray-900">Économique</option>
+              <option value="premium" className="text-gray-900">Premium Économique</option>
+              <option value="business" className="text-gray-900">Affaires</option>
+              <option value="first" className="text-gray-900">Première Classe</option>
             </select>
           </div>
         </div>
@@ -610,16 +619,16 @@ export default function FlightSearchForm() {
           <label className="flex items-center space-x-2 cursor-pointer">
             <input
               type="checkbox"
+              checked={searchData.directFlightsOnly}
+              onChange={(e) =>
+                setSearchData((prev) => ({
+                  ...prev,
+                  directFlightsOnly: e.target.checked,
+                }))
+              }
               className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
             <span className="text-gray-700">Vols directs uniquement</span>
-          </label>
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-            />
-            <span className="text-gray-700">Inclure les aéroports voisins</span>
           </label>
         </div>
       </form>
