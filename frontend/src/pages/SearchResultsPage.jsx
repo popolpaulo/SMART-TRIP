@@ -103,7 +103,14 @@ export default function SearchResultsPage() {
     // Filtre par nombre d'escales
     if (selectedStops.length > 0) {
       const stops = f.outbound?.stops ?? 0;
-      if (!selectedStops.includes(stops)) return false;
+      // Gérer "2+ escales" : si 2 est sélectionné, inclure tous les vols avec >= 2 escales
+      const matchesFilter = selectedStops.some(selectedStop => {
+        if (selectedStop === 2) {
+          return stops >= 2; // 2+ escales
+        }
+        return stops === selectedStop; // 0 ou 1 escale exactement
+      });
+      if (!matchesFilter) return false;
     }
     
     // Filtre par plage de prix
@@ -117,17 +124,17 @@ export default function SearchResultsPage() {
   const sortedFlights = [...filteredFlights].sort((a, b) => {
     switch (sortBy) {
       case "best": {
-        // Meilleur rapport qualité/prix (durée courte + prix bas)
+        // Meilleur rapport qualité/prix : combine prix (60%) et durée (40%)
         const priceA = Number(a.price?.total ?? a.price ?? 0);
         const priceB = Number(b.price?.total ?? b.price ?? 0);
         const durationA = parseDuration(a.outbound?.duration);
         const durationB = parseDuration(b.outbound?.duration);
         
-        // Normaliser et combiner (60% prix, 40% durée)
-        const scoreA = (priceA / 1000) * 0.6 + (durationA / 60) * 0.4;
-        const scoreB = (priceB / 1000) * 0.6 + (durationB / 60) * 0.4;
+        // Score plus bas = meilleur (prix bas + durée courte)
+        const scoreA = priceA * 0.6 + durationA * 0.4;
+        const scoreB = priceB * 0.6 + durationB * 0.4;
         
-        return scoreA - scoreB;
+        return scoreA - scoreB; // Tri ascendant
       }
       case "price": {
         const priceA = Number(a.price?.total ?? a.price ?? 0);
@@ -144,7 +151,8 @@ export default function SearchResultsPage() {
     }
   });
 
-  const hasBackendFlights = sortedFlights.length > 0;
+  // Vérifier si on a des vols de l'API (avant filtres)
+  const hasBackendFlights = flights.length > 0;
 
   // Extraire les compagnies disponibles pour le filtre
   const availableAirlines = Array.from(
@@ -158,32 +166,67 @@ export default function SearchResultsPage() {
     )
   );
 
-  // Helper pour obtenir le badge de recommandation
-  const getRecommendationBadge = (level) => {
-    const badges = {
-      excellent: {
-        color: "bg-green-100 text-green-800",
-        icon: "🏆",
-        label: "Excellent choix",
-      },
-      good: {
-        color: "bg-blue-100 text-blue-800",
-        icon: "👍",
-        label: "Bon choix",
-      },
-      acceptable: {
-        color: "bg-yellow-100 text-yellow-800",
-        icon: "👌",
-        label: "Acceptable",
-      },
-      poor: {
-        color: "bg-orange-100 text-orange-800",
-        icon: "⚠️",
-        label: "Peu recommandé",
-      },
-    };
-    return badges[level] || badges.acceptable;
+  // Identifier les 3 meilleurs vols
+  const getBestFlightsBadges = (flights) => {
+    if (flights.length === 0) return {};
+    
+    const badges = {};
+    
+    // MOINS CHER : prix le plus bas
+    const sortedByPrice = [...flights].sort((a, b) => {
+      const priceA = Number(a.price?.total ?? a.price ?? 0);
+      const priceB = Number(b.price?.total ?? b.price ?? 0);
+      return priceA - priceB;
+    });
+    const cheapest = sortedByPrice[0];
+    badges[cheapest.id] = { type: 'cheapest', label: 'MOINS CHER', icon: '💰', color: 'bg-green-500' };
+    
+    // PLUS RAPIDE : durée la plus courte
+    const sortedByDuration = [...flights].sort((a, b) => {
+      return parseDuration(a.outbound?.duration) - parseDuration(b.outbound?.duration);
+    });
+    const fastest = sortedByDuration[0];
+    
+    // Ajouter badge PLUS RAPIDE seulement si différent du moins cher
+    if (fastest.id !== cheapest.id) {
+      badges[fastest.id] = { type: 'fastest', label: 'PLUS RAPIDE', icon: '⚡', color: 'bg-blue-500' };
+    }
+    
+    // MEILLEUR : meilleur rapport qualité/prix sur TOUS les vols
+    // Normaliser les scores pour avoir une comparaison équitable
+    const allPrices = flights.map(f => Number(f.price?.total ?? f.price ?? 0));
+    const allDurations = flights.map(f => parseDuration(f.outbound?.duration));
+    const minPrice = Math.min(...allPrices);
+    const maxPrice = Math.max(...allPrices);
+    const minDuration = Math.min(...allDurations);
+    const maxDuration = Math.max(...allDurations);
+    
+    const flightsWithScores = flights
+      .filter(f => f.id !== cheapest.id && f.id !== fastest.id) // Exclure les 2 déjà badgés
+      .map(f => {
+        const price = Number(f.price?.total ?? f.price ?? 0);
+        const duration = parseDuration(f.outbound?.duration);
+        
+        // Normalisation 0-100 (0 = meilleur, 100 = pire)
+        const priceScore = maxPrice > minPrice ? ((price - minPrice) / (maxPrice - minPrice)) * 100 : 0;
+        const durationScore = maxDuration > minDuration ? ((duration - minDuration) / (maxDuration - minDuration)) * 100 : 0;
+        
+        // Score combiné : 60% prix + 40% durée (score bas = meilleur)
+        const totalScore = priceScore * 0.6 + durationScore * 0.4;
+        
+        return { ...f, totalScore };
+      })
+      .sort((a, b) => a.totalScore - b.totalScore);
+    
+    if (flightsWithScores.length > 0) {
+      const best = flightsWithScores[0];
+      badges[best.id] = { type: 'best', label: 'MEILLEUR', icon: '🏆', color: 'bg-purple-500' };
+    }
+    
+    return badges;
   };
+  
+  const flightBadges = getBestFlightsBadges(sortedFlights);
 
   if (loading) {
     return (
@@ -221,46 +264,8 @@ export default function SearchResultsPage() {
     );
   }
 
-  // Données de démonstration (fallback si pas de vraies données)
-  const mockFlights = [
-    {
-      id: 1,
-      airline: "Air France",
-      logo: "🇫🇷",
-      departure: "10:30",
-      arrival: "14:45",
-      duration: "8h 15m",
-      stops: "Direct",
-      price: 450,
-      class: "Economy",
-    },
-    {
-      id: 2,
-      airline: "Lufthansa",
-      logo: "🇩🇪",
-      departure: "14:20",
-      arrival: "18:50",
-      duration: "8h 30m",
-      stops: "1 escale",
-      price: 380,
-      class: "Economy",
-    },
-    {
-      id: 3,
-      airline: "British Airways",
-      logo: "🇬🇧",
-      departure: "08:15",
-      arrival: "12:30",
-      duration: "8h 15m",
-      stops: "Direct",
-      price: 520,
-      class: "Economy",
-    },
-  ];
-
-  // Si on a des vols du backend, on n'affiche que ceux qui passent les filtres.
-  // Si aucun vol backend, on garde les mocks de démo.
-  const displayFlights = hasBackendFlights ? filteredFlights : mockFlights;
+  // Afficher les vols triés et filtrés
+  const displayFlights = sortedFlights;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -302,15 +307,15 @@ export default function SearchResultsPage() {
 
               {/* Tri */}
               <div>
-                <label className="label">Trier par</label>
+                <label className="label mb-2 block text-sm font-medium text-gray-700">Trier par</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="input w-full"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-sm cursor-pointer hover:border-gray-400 transition"
                 >
-                  <option value="best">🏆 Meilleur rapport qualité/prix</option>
-                  <option value="price">💰 Prix le plus bas</option>
-                  <option value="duration">⚡ Vol le plus rapide</option>
+                  <option value="best">🏆  Meilleur rapport qualité/prix</option>
+                  <option value="price">💰  Prix le plus bas</option>
+                  <option value="duration">⚡  Vol le plus rapide</option>
                 </select>
               </div>
 
@@ -459,7 +464,7 @@ export default function SearchResultsPage() {
             </div>
           </div>
 
-          {/* Résultats avec scoring IA */}
+          {/* Résultats avec insights IA */}
           <div className="lg:col-span-3 space-y-4">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">
@@ -467,18 +472,123 @@ export default function SearchResultsPage() {
                 {displayFlights.length > 1 ? "s" : ""} trouvé
                 {displayFlights.length > 1 ? "s" : ""}
               </h2>
-              {hasBackendFlights && filteredFlights.length === 0 && (
-                <p className="text-sm text-gray-500 ml-4">
-                  Aucun vol ne correspond à vos filtres (prix/escales).
-                </p>
-              )}
-              {sortedFlights.length > 0 && (
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <Sparkles className="h-4 w-4 text-primary-600" />
-                  <span>Triés par IA</span>
-                </div>
-              )}
             </div>
+
+            {/* IA Insights dynamiques */}
+            {displayFlights.length > 0 && (
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-5 mb-6">
+                <div className="flex items-start space-x-3">
+                  <div className="bg-blue-500 rounded-full p-2">
+                    <Sparkles className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-blue-900 mb-2">💡 Insights pour votre voyage</h3>
+                    <div className="space-y-2 text-sm text-blue-800">
+                      {(() => {
+                        const cheapest = Math.min(...displayFlights.map(f => Number(f.price?.total ?? f.price ?? 0)));
+                        const mostExpensive = Math.max(...displayFlights.map(f => Number(f.price?.total ?? f.price ?? 0)));
+                        const savings = mostExpensive - cheapest;
+                        const savingsPercent = Math.round((savings / mostExpensive) * 100);
+                        
+                        return (
+                          <p>
+                            <strong>💰 Économies possibles :</strong> Jusqu'à {savings.toFixed(0)}€ ({savingsPercent}%) entre le vol le moins cher ({cheapest.toFixed(0)}€) et le plus cher ({mostExpensive.toFixed(0)}€)
+                          </p>
+                        );
+                      })()}
+                      
+                      {(() => {
+                        const directFlights = displayFlights.filter(f => (f.outbound?.stops ?? 0) === 0).length;
+                        const withStops = displayFlights.length - directFlights;
+                        
+                        if (directFlights > 0) {
+                          const directDurations = displayFlights.filter(f => (f.outbound?.stops ?? 0) === 0).map(f => parseDuration(f.outbound?.duration));
+                          const stopsMinDuration = withStops > 0 ? Math.min(...displayFlights.filter(f => (f.outbound?.stops ?? 0) > 0).map(f => parseDuration(f.outbound?.duration))) : 0;
+                          const directMinDuration = Math.min(...directDurations);
+                          const timeSaved = stopsMinDuration > 0 ? Math.round((stopsMinDuration - directMinDuration) / 60) : 0;
+                          
+                          return (
+                            <p>
+                              <strong>⚡ Vols directs :</strong> {directFlights} vol{directFlights > 1 ? 's' : ''} direct{directFlights > 1 ? 's' : ''} disponible{directFlights > 1 ? 's' : ''} • {timeSaved > 0 ? `Gagnez ${timeSaved}h en évitant les escales` : 'Les plus rapides'}
+                            </p>
+                          );
+                        } else {
+                          return (
+                            <p>
+                              <strong>⚡ Escales :</strong> Aucun vol direct disponible • Tous les vols ont au moins 1 escale
+                            </p>
+                          );
+                        }
+                      })()}
+                      
+                      {(() => {
+                        // Calculer le décalage horaire (approximatif basé sur les codes aéroports)
+                        const timezones = {
+                          // Europe
+                          'CDG': { offset: 1, city: 'Paris' }, 'ORY': { offset: 1, city: 'Paris' },
+                          'LHR': { offset: 0, city: 'Londres' }, 'AMS': { offset: 1, city: 'Amsterdam' },
+                          'FRA': { offset: 1, city: 'Frankfurt' }, 'MAD': { offset: 1, city: 'Madrid' },
+                          'BCN': { offset: 1, city: 'Barcelona' }, 'FCO': { offset: 1, city: 'Rome' },
+                          // Asie
+                          'HND': { offset: 9, city: 'Tokyo' }, 'NRT': { offset: 9, city: 'Tokyo' },
+                          'ICN': { offset: 9, city: 'Seoul' }, 'PEK': { offset: 8, city: 'Beijing' },
+                          'PVG': { offset: 8, city: 'Shanghai' }, 'SIN': { offset: 8, city: 'Singapore' },
+                          'BKK': { offset: 7, city: 'Bangkok' }, 'HKG': { offset: 8, city: 'Hong Kong' },
+                          'DXB': { offset: 4, city: 'Dubai' }, 'DOH': { offset: 3, city: 'Doha' },
+                          // Amérique
+                          'JFK': { offset: -5, city: 'New York' }, 'LAX': { offset: -8, city: 'Los Angeles' },
+                          'ORD': { offset: -6, city: 'Chicago' }, 'MIA': { offset: -5, city: 'Miami' },
+                          'YYZ': { offset: -5, city: 'Toronto' }, 'MEX': { offset: -6, city: 'Mexico' },
+                          // Océanie
+                          'SYD': { offset: 11, city: 'Sydney' }, 'MEL': { offset: 11, city: 'Melbourne' },
+                          'AKL': { offset: 13, city: 'Auckland' },
+                        };
+                        
+                        const originTz = timezones[originCode];
+                        const destTz = timezones[destinationCode];
+                        
+                        if (originTz && destTz) {
+                          const diff = destTz.offset - originTz.offset;
+                          const absDiff = Math.abs(diff);
+                          
+                          return (
+                            <p>
+                              <strong>🌍 Décalage horaire :</strong> {diff === 0 ? 'Aucun décalage' : `${absDiff}h ${diff > 0 ? 'en avance' : 'en retard'} à ${destTz.city}`} • 
+                              {absDiff >= 6 ? ' Prévoyez une adaptation au jet lag' : ' Décalage facile à gérer'}
+                            </p>
+                          );
+                        }
+                        
+                        return null;
+                      })()}
+                      
+                      <p>
+                        <strong>🏢 Choix compagnies :</strong> {availableAirlines.length} compagnie{availableAirlines.length > 1 ? 's' : ''} • 
+                        {availableAirlines.length > 10 ? ' Très large choix pour optimiser' : availableAirlines.length > 5 ? ' Bon choix disponible' : ' Sélection limitée'}
+                      </p>
+                      
+                      {returnDate && (
+                        <p className="text-blue-700 bg-blue-100 px-3 py-1.5 rounded-lg inline-block mt-1">
+                          ✈️ Recherche aller-retour • Les vols retour sont groupés ci-dessous
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Message si aucun vol après filtres */}
+            {hasBackendFlights && displayFlights.length === 0 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                <p className="text-lg font-semibold text-yellow-800 mb-2">
+                  Aucun vol ne correspond à vos filtres
+                </p>
+                <p className="text-sm text-yellow-700">
+                  Essayez d'ajuster la fourchette de prix ou les escales pour voir plus de résultats.
+                </p>
+              </div>
+            )}
 
             {displayFlights.map((flight, index) => {
               const carrierCode =
@@ -493,34 +603,20 @@ export default function SearchResultsPage() {
                 departureDate,
                 returnDate,
               });
-              const recommendation =
-                flight.aiRecommendation?.level || "acceptable";
-              const badge = getRecommendationBadge(recommendation);
-              const highlights = flight.aiRecommendation?.highlights || [];
+              const flightBadge = flightBadges[flight.id];
 
               return (
                 <div
                   key={flight.id}
                   className="bg-white rounded-xl shadow-md hover:shadow-xl transition overflow-hidden"
                 >
-                  {/* Badge de recommandation IA */}
-                  {flight.aiScore && index < 3 && (
+                  {/* Badge pratique */}
+                  {flightBadge && (
                     <div
-                      className={`${badge.color} px-4 py-2 flex items-center justify-between text-sm font-medium`}
+                      className={`${flightBadge.color} text-white px-4 py-2 flex items-center space-x-2 text-sm font-bold`}
                     >
-                      <div className="flex items-center space-x-2">
-                        <Award className="h-4 w-4" />
-                        <span>
-                          {badge.icon} {badge.label}
-                        </span>
-                        {index === 0 && (
-                          <span className="ml-2">• Top recommandation IA</span>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Brain className="h-4 w-4" />
-                        <span className="font-bold">{flight.aiScore}/100</span>
-                      </div>
+                      <Award className="h-4 w-4" />
+                      <span>{flightBadge.icon} {flightBadge.label}</span>
                     </div>
                   )}
 
@@ -536,8 +632,14 @@ export default function SearchResultsPage() {
                                 alt={airlineInfo.name}
                                 className="w-12 h-12 object-contain"
                                 onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  e.target.nextSibling.style.display = 'flex';
+                                  // Fallback vers un CDN alternatif
+                                  if (!e.target.dataset.fallbackTried) {
+                                    e.target.dataset.fallbackTried = 'true';
+                                    e.target.src = `https://pics.avs.io/64/64/${carrierCode}.png`;
+                                  } else {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                  }
                                 }}
                               />
                             ) : null}
@@ -557,17 +659,7 @@ export default function SearchResultsPage() {
                             </div>
                           </div>
 
-                          {/* Score IA */}
-                          {flight.aiScore && (
-                            <div className="text-right">
-                              <div className="text-sm text-gray-500">
-                                Score IA
-                              </div>
-                              <div className="text-2xl font-bold text-primary-600">
-                                {flight.aiScore}
-                              </div>
-                            </div>
-                          )}
+
                         </div>
 
                         <div className="flex items-center justify-between mb-4">
@@ -632,40 +724,61 @@ export default function SearchResultsPage() {
                           </div>
                         </div>
 
-                        {/* Highlights IA */}
-                        {highlights.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {highlights.slice(0, 3).map((highlight, i) => (
-                              <span
-                                key={i}
-                                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700 border border-primary-200"
-                              >
-                                <Sparkles className="h-3 w-3 mr-1" />
-                                {highlight}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                        {/* Vol retour si round trip */}
+                        {returnDate && flight.inbound && (
+                          <div className="mt-6 pt-6 border-t border-gray-200">
+                            <div className="flex items-center mb-3">
+                              <div className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold">
+                                ← Vol retour
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="text-center">
+                                <div className="text-2xl font-bold">
+                                  {flight.inbound?.departure?.time
+                                    ? new Date(flight.inbound.departure.time).toLocaleTimeString("fr-FR", {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })
+                                    : "—"}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  {flight.inbound?.departure?.airport || destinationCode}
+                                </div>
+                              </div>
 
-                        {/* Breakdown du score IA */}
-                        {flight.scoreBreakdown && (
-                          <div className="mt-4 pt-4 border-t grid grid-cols-3 gap-2 text-xs">
-                            <div className="text-center">
-                              <div className="text-gray-500">💰 Prix</div>
-                              <div className="font-bold text-primary-600">
-                                {Math.round(flight.scoreBreakdown.price)}/100
+                              <div className="flex-1 px-6">
+                                <div className="flex items-center justify-center space-x-2 text-gray-600">
+                                  <div className="h-px bg-gray-300 flex-1"></div>
+                                  <Plane className="h-5 w-5 transform rotate-180" />
+                                  <div className="h-px bg-gray-300 flex-1"></div>
+                                </div>
+                                <div className="text-center mt-2">
+                                  <div className="text-sm font-medium">
+                                    {flight.inbound?.duration ? formatDuration(flight.inbound.duration) : "—"}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {flight.inbound?.stops !== undefined
+                                      ? flight.inbound.stops === 0
+                                        ? "Direct"
+                                        : `${flight.inbound.stops} escale${flight.inbound.stops > 1 ? "s" : ""}`
+                                      : "—"}
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                            <div className="text-center">
-                              <div className="text-gray-500">⏱️ Durée</div>
-                              <div className="font-bold text-primary-600">
-                                {Math.round(flight.scoreBreakdown.duration)}/100
-                              </div>
-                            </div>
-                            <div className="text-center">
-                              <div className="text-gray-500">✨ Confort</div>
-                              <div className="font-bold text-primary-600">
-                                {Math.round(flight.scoreBreakdown.comfort)}/100
+
+                              <div className="text-center">
+                                <div className="text-2xl font-bold">
+                                  {flight.inbound?.arrival?.time
+                                    ? new Date(flight.inbound.arrival.time).toLocaleTimeString("fr-FR", {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })
+                                    : "—"}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  {flight.inbound?.arrival?.airport || originCode}
+                                </div>
                               </div>
                             </div>
                           </div>
