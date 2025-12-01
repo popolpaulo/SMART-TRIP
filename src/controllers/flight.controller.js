@@ -16,7 +16,7 @@ exports.searchFlights = async (req, res) => {
       travelClass = "ECONOMY",
       cabinClass = "economy",
       nonStop = false,
-      maxResults = 50,
+      maxResults = 250,
     } = req.body;
 
     const user = req.user;

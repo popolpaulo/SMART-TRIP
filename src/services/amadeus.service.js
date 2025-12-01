@@ -68,7 +68,7 @@ class AmadeusService {
       adults = 1,
       travelClass = "ECONOMY",
       nonStop = false,
-      maxResults = 50,
+      maxResults = 250,
     } = searchParams;
 
     try {
