@@ -29,6 +29,17 @@ export default function SearchResultsPage() {
   const [selectedStopsOutbound, setSelectedStopsOutbound] = useState([]); // Filtre escales aller
   const [selectedStopsInbound, setSelectedStopsInbound] = useState([]); // Filtre escales retour
 
+  // Filtres multi-city par segment
+  const [multiCityStopsFilters, setMultiCityStopsFilters] = useState({}); // { 0: [0, 1], 1: [0], ... }
+
+  // Détecter le type de voyage
+  const tripType = searchParams.get("tripType");
+  const isMultiCity = tripType === "multicity";
+
+  // Pour multi-city
+  const [multiCitySegments, setMultiCitySegments] = useState([]);
+  const [multiCityLoading, setMultiCityLoading] = useState(false);
+
   const origin = searchParams.get("origin");
   const destination = searchParams.get("destination");
   const departureDate = searchParams.get("departureDate");
@@ -51,6 +62,72 @@ export default function SearchResultsPage() {
   const destinationCode = extractIata(destination);
 
   useEffect(() => {
+    // Gestion Multi-City
+    if (isMultiCity) {
+      const segmentsParam = searchParams.get("segments");
+      console.log("Multi-city segments param:", segmentsParam);
+      
+      if (segmentsParam) {
+        try {
+          const parsedSegments = JSON.parse(decodeURIComponent(segmentsParam));
+          console.log("Parsed segments:", parsedSegments);
+          setMultiCitySegments(parsedSegments);
+          
+          // Lancer les recherches en parallèle pour chaque segment
+          const fetchMultiCityFlights = async () => {
+            setMultiCityLoading(true);
+            setError(null);
+            
+            try {
+              // Faire toutes les recherches en parallèle
+              const searchPromises = parsedSegments.map((segment, index) => 
+                searchFlights({
+                  origin: segment.origin,
+                  destination: segment.destination,
+                  departureDate: segment.departureDate,
+                  adults: passengers,
+                  cabinClass,
+                  nonStop: false,
+                }).then(data => ({
+                  segmentIndex: index,
+                  segment,
+                  flights: data.flights || []
+                })).catch(err => {
+                  console.error(`Error fetching flights for segment ${index + 1}:`, err);
+                  return {
+                    segmentIndex: index,
+                    segment,
+                    flights: [],
+                    error: err.message
+                  };
+                })
+              );
+              
+              const results = await Promise.all(searchPromises);
+              console.log("Multi-city search results:", results);
+              
+              // Stocker les résultats dans flights (structure spéciale pour multi-city)
+              setFlights(results);
+              
+            } catch (err) {
+              console.error("Error in multi-city search:", err);
+              setError("Erreur lors de la recherche multi-destinations");
+            } finally {
+              setMultiCityLoading(false);
+            }
+          };
+          
+          fetchMultiCityFlights();
+          
+        } catch (err) {
+          console.error("Error parsing multi-city segments:", err);
+          setError("Erreur lors du chargement des segments multi-city");
+        }
+      }
+      return;
+    }
+
+    // Gestion normale (aller simple / aller-retour)
     const fetchFlights = async () => {
       try {
         setLoading(true);
@@ -93,6 +170,86 @@ export default function SearchResultsPage() {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     return `${hours}h${minutes > 0 ? ` ${minutes}m` : ""}`;
+  };
+
+  // Fonction pour créer des combinaisons de vols multi-city
+  const createMultiCityCombinations = (segmentsData) => {
+    if (!segmentsData || segmentsData.length === 0) return [];
+    
+    // Fonction récursive pour créer toutes les combinaisons
+    const generateCombinations = (index, currentCombo) => {
+      if (index === segmentsData.length) {
+        return [currentCombo];
+      }
+      
+      const segment = segmentsData[index];
+      const segmentFlights = segment.flights || [];
+      
+      if (segmentFlights.length === 0) {
+        return generateCombinations(index + 1, currentCombo);
+      }
+      
+      const combinations = [];
+      for (const flight of segmentFlights) {
+        combinations.push(...generateCombinations(index + 1, [...currentCombo, { segmentIndex: index, flight }]));
+      }
+      
+      return combinations;
+    };
+    
+    const allCombinations = generateCombinations(0, []);
+    
+    // Transformer les combinaisons en objets avec prix total et durée totale
+    return allCombinations.map((combo, idx) => {
+      const totalPrice = combo.reduce((sum, item) => {
+        const price = Number(item.flight.price?.total ?? item.flight.price ?? 0);
+        return sum + price;
+      }, 0);
+      
+      const totalDuration = combo.reduce((sum, item) => {
+        return sum + parseDuration(item.flight.outbound?.duration);
+      }, 0);
+      
+      return {
+        id: `combo-${idx}`,
+        segments: combo,
+        totalPrice,
+        totalDuration,
+      };
+    });
+  };
+
+  // Calculer les badges pour les combinaisons multi-city
+  const getMultiCityBadges = (combinations) => {
+    if (!combinations || combinations.length === 0) return {};
+    
+    const badges = {};
+    
+    // Meilleur (60% prix + 40% durée) - priorité 1
+    const best = combinations.reduce((best, combo) => {
+      const scoreCombo = combo.totalPrice * 0.6 + combo.totalDuration * 0.4;
+      const scoreBest = best.totalPrice * 0.6 + best.totalDuration * 0.4;
+      return scoreCombo < scoreBest ? combo : best;
+    });
+    badges[best.id] = 'MEILLEUR';
+    
+    // Meilleur prix - seulement si pas déjà "MEILLEUR"
+    const cheapest = combinations.reduce((min, combo) => 
+      combo.totalPrice < min.totalPrice ? combo : min
+    );
+    if (!badges[cheapest.id]) {
+      badges[cheapest.id] = 'MOINS CHER';
+    }
+    
+    // Plus rapide - seulement si pas déjà un autre badge
+    const fastest = combinations.reduce((min, combo) => 
+      combo.totalDuration < min.totalDuration ? combo : min
+    );
+    if (!badges[fastest.id]) {
+      badges[fastest.id] = 'PLUS RAPIDE';
+    }
+    
+    return badges;
   };
 
   // Extraire les compagnies uniques des vols trouvés
@@ -231,7 +388,302 @@ export default function SearchResultsPage() {
   
   const flightBadges = getBestFlightsBadges(sortedFlights);
 
-  if (loading) {
+  // Affichage spécial pour Multi-City
+  if (isMultiCity) {
+    if (multiCityLoading) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mb-4"></div>
+            <p className="text-xl font-semibold text-gray-700">
+              🧠 Recherche des meilleurs vols pour vos {multiCitySegments.length} destinations...
+            </p>
+            <p className="text-gray-500 mt-2">
+              Analyse en cours sur 500+ compagnies
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Créer les combinaisons de vols
+    const combinations = createMultiCityCombinations(flights);
+    console.log("Flight combinations:", combinations.length);
+
+    // Filtrer les combinaisons
+    const filteredCombinations = combinations.filter(combo => {
+      // Filtre par prix
+      if (combo.totalPrice < minBudget || combo.totalPrice > maxBudget) return false;
+      
+      // Filtre par escales pour chaque segment
+      for (const [segmentIndex, stopsFilter] of Object.entries(multiCityStopsFilters)) {
+        const idx = parseInt(segmentIndex);
+        if (stopsFilter.length > 0) {
+          const segmentFlight = combo.segments[idx]?.flight;
+          if (!segmentFlight) continue;
+          const stops = segmentFlight.outbound?.stops ?? 0;
+          const matchesFilter = stopsFilter.some(selectedStop => {
+            if (selectedStop === 2) return stops >= 2;
+            return stops === selectedStop;
+          });
+          if (!matchesFilter) return false;
+        }
+      }
+      
+      return true;
+    });
+
+    // Trier les combinaisons
+    const sortedCombinations = [...filteredCombinations].sort((a, b) => {
+      switch (sortBy) {
+        case "best":
+          const scoreA = a.totalPrice * 0.6 + a.totalDuration * 0.4;
+          const scoreB = b.totalPrice * 0.6 + b.totalDuration * 0.4;
+          return scoreA - scoreB;
+        case "price":
+          return a.totalPrice - b.totalPrice;
+        case "duration":
+          return a.totalDuration - b.totalDuration;
+        default:
+          return 0;
+      }
+    });
+
+    const displayCombinations = sortedCombinations.slice(0, 50); // Limit à 50 combinaisons
+
+    // Calculer les badges pour les combinaisons affichées
+    const comboBadges = getMultiCityBadges(displayCombinations);
+
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4 max-w-7xl">
+          {/* En-tête */}
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              ✈️ Résultats Multi-Destinations
+            </h2>
+            <p className="text-gray-600">
+              {combinations.length} combinaisons trouvées • {passengers} passager{passengers > 1 ? 's' : ''} • Classe {cabinClass}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Filtres */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-xl shadow-lg p-6 sticky top-4">
+                <h3 className="font-semibold text-lg mb-4">Filtres</h3>
+
+                {/* Tri */}
+                <div className="mb-6">
+                  <label className="label">Trier par</label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="input"
+                  >
+                    <option value="best">🏆 Meilleur rapport</option>
+                    <option value="price">💰 Prix le plus bas</option>
+                    <option value="duration">⚡ Plus rapide</option>
+                  </select>
+                </div>
+
+                {/* Prix */}
+                <div className="mb-6">
+                  <label className="label">
+                    Prix total: {minBudget}€ - {maxBudget}€
+                  </label>
+                  <div className="space-y-3">
+                    <input
+                      type="range"
+                      min="0"
+                      max="10000"
+                      step="100"
+                      value={maxBudget}
+                      onChange={(e) => setMaxBudget(Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                {/* Escales par segment */}
+                {multiCitySegments.map((segment, idx) => (
+                  <div key={idx} className="mb-4">
+                    <label className="label">Vol {idx + 1}: {segment.origin}→{segment.destination}</label>
+                    <div className="space-y-2">
+                      {[0, 1, 2].map(stops => (
+                        <label key={stops} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            className="rounded"
+                            checked={(multiCityStopsFilters[idx] || []).includes(stops)}
+                            onChange={(e) => {
+                              const current = multiCityStopsFilters[idx] || [];
+                              if (e.target.checked) {
+                                setMultiCityStopsFilters({
+                                  ...multiCityStopsFilters,
+                                  [idx]: [...current, stops]
+                                });
+                              } else {
+                                setMultiCityStopsFilters({
+                                  ...multiCityStopsFilters,
+                                  [idx]: current.filter(s => s !== stops)
+                                });
+                              }
+                            }}
+                          />
+                          <span className="text-sm">
+                            {stops === 0 ? 'Direct' : stops === 1 ? '1 escale' : '2+ escales'}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Résultats */}
+            <div className="lg:col-span-3">
+              {displayCombinations.length > 0 ? (
+                <div className="space-y-4">
+                  <p className="text-gray-600">
+                    Affichage de {displayCombinations.length} résultat{displayCombinations.length > 1 ? 's' : ''}
+                  </p>
+
+                  {displayCombinations.map((combo) => {
+                    const badge = comboBadges[combo.id];
+                    
+                    return (
+                      <div key={combo.id} className="bg-white rounded-xl shadow-lg p-6">
+                        {/* Badge */}
+                        {badge && (
+                          <div className="mb-3">
+                            <span className={`inline-block px-4 py-2 rounded-lg text-sm font-bold ${
+                              badge === 'MEILLEUR' ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300' :
+                              badge === 'MOINS CHER' ? 'bg-green-100 text-green-800 border-2 border-green-300' :
+                              'bg-blue-100 text-blue-800 border-2 border-blue-300'
+                            }`}>
+                              {badge === 'MEILLEUR' ? '🏆 MEILLEUR' :
+                               badge === 'MOINS CHER' ? '💰 MOINS CHER' :
+                               '⚡ PLUS RAPIDE'}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Prix total */}
+                        <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
+                          <div>
+                            <span className="text-sm text-gray-600">Prix total du voyage</span>
+                            <div className="text-3xl font-bold text-primary-600">
+                              {combo.totalPrice.toFixed(0)}€
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-sm text-gray-600">Durée totale</span>
+                            <div className="text-xl font-semibold text-gray-900">
+                              {Math.floor(combo.totalDuration / 60)}h {combo.totalDuration % 60}m
+                            </div>
+                          </div>
+                        </div>
+
+                      {/* Segments */}
+                      <div className="space-y-4">
+                        {combo.segments.map((item, segIdx) => {
+                          const flight = item.flight;
+                          const carrier = flight.validatingAirlineCodes?.[0] || flight.outbound?.airline || 'XX';
+                          const airlineInfo = getAirlineInfo(carrier);
+                          const price = Number(flight.price?.total ?? flight.price ?? 0);
+                          const stops = flight.outbound?.stops ?? 0;
+                          const segment = multiCitySegments[segIdx];
+
+                          return (
+                            <div key={segIdx} className="border-l-4 border-primary-500 pl-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <span className="text-xs font-semibold text-primary-600">Vol {segIdx + 1}</span>
+                                  <h4 className="text-lg font-semibold text-gray-900">
+                                    {segment?.origin} → {segment?.destination}
+                                  </h4>
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-lg font-bold text-gray-900">{price.toFixed(0)}€</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                {airlineInfo.logo && (
+                                  <img 
+                                    src={airlineInfo.logo} 
+                                    alt={airlineInfo.name}
+                                    className="h-6 w-6 object-contain"
+                                  />
+                                )}
+                                <span>{airlineInfo.name}</span>
+                                <span>•</span>
+                                <span>⏱️ {formatDuration(flight.outbound?.duration)}</span>
+                                <span>•</span>
+                                <span>
+                                  {stops === 0 ? '✈️ Direct' : `🔄 ${stops} escale${stops > 1 ? 's' : ''}`}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Bouton réserver */}
+                      <button
+                        onClick={() => {
+                          // Ouvrir les liens de réservation pour tous les segments
+                          combo.segments.forEach(item => {
+                            const carrier = item.flight.validatingAirlineCodes?.[0] || item.flight.outbound?.airline || 'XX';
+                            const seg = multiCitySegments[item.segmentIndex];
+                            const link = generateBookingLink(carrier, seg?.origin, seg?.destination);
+                            window.open(link, '_blank');
+                          });
+                        }}
+                        className="w-full mt-4 btn btn-primary"
+                      >
+                        Réserver cette combinaison →
+                      </button>
+                    </div>
+                  );
+                  })}
+
+                  {filteredCombinations.length > displayCombinations.length && (
+                    <p className="text-center text-gray-500">
+                      + {filteredCombinations.length - displayCombinations.length} autres combinaisons disponibles
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+                  <p className="text-gray-600">Aucune combinaison ne correspond à vos critères de filtrage.</p>
+                  <button
+                    onClick={() => {
+                      setMultiCityStopsFilters({});
+                      setMaxBudget(10000);
+                    }}
+                    className="mt-4 btn btn-primary"
+                  >
+                    Réinitialiser les filtres
+                  </button>
+                </div>
+              )}
+
+              <button
+                onClick={() => window.history.back()}
+                className="w-full mt-6 btn btn-secondary"
+              >
+                ← Modifier la recherche
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

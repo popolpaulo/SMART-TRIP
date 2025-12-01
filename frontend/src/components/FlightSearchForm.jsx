@@ -177,6 +177,16 @@ export default function FlightSearchForm() {
     useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
 
+  // État pour multi-city (segments de vol)
+  const [multiCitySegments, setMultiCitySegments] = useState([
+    { origin: "", destination: "", departureDate: "" },
+    { origin: "", destination: "", departureDate: "" },
+  ]);
+
+  // États pour l'autocomplétion des segments multi-city
+  const [segmentSuggestions, setSegmentSuggestions] = useState({});
+  const [showSegmentSuggestions, setShowSegmentSuggestions] = useState({});
+
   const originInputRef = useRef(null);
   const destinationInputRef = useRef(null);
   const originDropdownRef = useRef(null);
@@ -280,20 +290,37 @@ export default function FlightSearchForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Rediriger vers la page de résultats avec les paramètres
-    const params = new URLSearchParams({
-      origin: extractIata(searchData.origin),
-      destination: extractIata(searchData.destination),
-      departureDate: searchData.departureDate,
-      ...(tripType === "roundtrip" && searchData.returnDate
-        ? { returnDate: searchData.returnDate }
-        : {}),
-      passengers: String(searchData.passengers),
-      class: searchData.class,
-      tripType,
-      ...(searchData.directFlightsOnly ? { directFlightsOnly: 'true' } : {}),
-    });
-    navigate(`/search?${params.toString()}`);
+    
+    if (tripType === "multicity") {
+      // Pour multi-city, envoyer les segments
+      console.log("Multi-city segments:", multiCitySegments);
+      const params = new URLSearchParams({
+        tripType: "multicity",
+        segments: JSON.stringify(multiCitySegments.map(seg => ({
+          origin: extractIata(seg.origin),
+          destination: extractIata(seg.destination),
+          departureDate: seg.departureDate,
+        }))),
+        passengers: String(searchData.passengers),
+        class: searchData.class,
+      });
+      navigate(`/search?${params.toString()}`);
+    } else {
+      // Pour aller simple et aller-retour
+      const params = new URLSearchParams({
+        origin: extractIata(searchData.origin),
+        destination: extractIata(searchData.destination),
+        departureDate: searchData.departureDate,
+        ...(tripType === "roundtrip" && searchData.returnDate
+          ? { returnDate: searchData.returnDate }
+          : {}),
+        passengers: String(searchData.passengers),
+        class: searchData.class,
+        tripType,
+        ...(searchData.directFlightsOnly ? { directFlightsOnly: 'true' } : {}),
+      });
+      navigate(`/search?${params.toString()}`);
+    }
   };
 
   const swapLocations = () => {
@@ -303,6 +330,60 @@ export default function FlightSearchForm() {
       ...prev,
       origin: prev.destination,
       destination: prev.origin,
+    }));
+  };
+
+  // Fonctions pour gérer les segments multi-city
+  const addSegment = () => {
+    setMultiCitySegments([...multiCitySegments, { origin: "", destination: "", departureDate: "" }]);
+  };
+
+  const removeSegment = (index) => {
+    if (multiCitySegments.length > 2) {
+      setMultiCitySegments(multiCitySegments.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateSegment = (index, field, value) => {
+    const newSegments = [...multiCitySegments];
+    newSegments[index][field] = value;
+    setMultiCitySegments(newSegments);
+
+    // Autocomplétion pour les segments
+    if ((field === 'origin' || field === 'destination') && value.length >= 2) {
+      const filtered = POPULAR_AIRPORTS.filter(
+        (airport) =>
+          airport.city.toLowerCase().includes(value.toLowerCase()) ||
+          airport.code.toLowerCase().includes(value.toLowerCase()) ||
+          airport.country.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 8);
+      
+      setSegmentSuggestions(prev => ({
+        ...prev,
+        [`${index}-${field}`]: filtered
+      }));
+      
+      setShowSegmentSuggestions(prev => ({
+        ...prev,
+        [`${index}-${field}`]: true
+      }));
+    } else if (field === 'origin' || field === 'destination') {
+      setShowSegmentSuggestions(prev => ({
+        ...prev,
+        [`${index}-${field}`]: false
+      }));
+    }
+  };
+
+  const selectSegmentSuggestion = (index, field, airport) => {
+    const newValue = `${airport.city} (${airport.code})`;
+    const newSegments = [...multiCitySegments];
+    newSegments[index][field] = newValue;
+    setMultiCitySegments(newSegments);
+    
+    setShowSegmentSuggestions(prev => ({
+      ...prev,
+      [`${index}-${field}`]: false
     }));
   };
 
@@ -343,7 +424,8 @@ export default function FlightSearchForm() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        {/* Origine et Destination avec bouton swap centré */}
+        {/* Origine et Destination avec bouton swap centré - Masqué pour multi-city */}
+        {tripType !== "multicity" && (
         <div className="relative mb-6">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-0 md:gap-4 items-end">
             {/* Origine */}
@@ -502,8 +584,157 @@ export default function FlightSearchForm() {
             </div>
           </div>
         </div>
+        )}
 
-        {/* Dates */}
+        {/* Interface Multi-City */}
+        {tripType === "multicity" && (
+          <div className="mb-6 space-y-4">
+            <div className="flex items-center space-x-2 mb-4">
+              <label className="block text-sm font-medium text-gray-700">
+                ✈️ Segments de vol
+              </label>
+              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                Entrez les codes IATA (ex: CDG, JFK, HND)
+              </span>
+            </div>
+            {multiCitySegments.map((segment, index) => (
+              <div key={index} className="border-2 border-gray-300 rounded-lg p-4 bg-white shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-gray-900 text-base">Vol {index + 1}</h4>
+                  {multiCitySegments.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => removeSegment(index)}
+                      className="text-red-600 hover:text-red-700 text-sm font-medium"
+                    >
+                      ✕ Supprimer
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Origine */}
+                  <div className="relative">
+                    <label className="block text-xs font-medium text-gray-700 mb-2">
+                      📍 Départ
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Paris (CDG)"
+                      value={segment.origin}
+                      onChange={(e) => updateSegment(index, 'origin', e.target.value)}
+                      onFocus={() => {
+                        if (segment.origin.length >= 2) {
+                          setShowSegmentSuggestions(prev => ({ ...prev, [`${index}-origin`]: true }));
+                        }
+                      }}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 font-medium placeholder-gray-400"
+                      required
+                      autoComplete="off"
+                    />
+                    
+                    {/* Suggestions origine */}
+                    {showSegmentSuggestions[`${index}-origin`] && segmentSuggestions[`${index}-origin`]?.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                        {segmentSuggestions[`${index}-origin`].map((airport, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => selectSegmentSuggestion(index, 'origin', airport)}
+                            className="w-full px-4 py-3 text-left hover:bg-primary-50 transition-colors border-b border-gray-100 last:border-0"
+                          >
+                            <div className="font-semibold text-gray-900">
+                              {airport.city}
+                              <span className="ml-2 text-primary-600 font-bold">
+                                ({airport.code})
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {airport.airport} - {airport.country}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Destination */}
+                  <div className="relative">
+                    <label className="block text-xs font-medium text-gray-700 mb-2">
+                      📍 Arrivée
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="New York (JFK)"
+                      value={segment.destination}
+                      onChange={(e) => updateSegment(index, 'destination', e.target.value)}
+                      onFocus={() => {
+                        if (segment.destination.length >= 2) {
+                          setShowSegmentSuggestions(prev => ({ ...prev, [`${index}-destination`]: true }));
+                        }
+                      }}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 font-medium placeholder-gray-400"
+                      required
+                      autoComplete="off"
+                    />
+                    
+                    {/* Suggestions destination */}
+                    {showSegmentSuggestions[`${index}-destination`] && segmentSuggestions[`${index}-destination`]?.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                        {segmentSuggestions[`${index}-destination`].map((airport, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => selectSegmentSuggestion(index, 'destination', airport)}
+                            className="w-full px-4 py-3 text-left hover:bg-primary-50 transition-colors border-b border-gray-100 last:border-0"
+                          >
+                            <div className="font-semibold text-gray-900">
+                              {airport.city}
+                              <span className="ml-2 text-primary-600 font-bold">
+                                ({airport.code})
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {airport.airport} - {airport.country}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Date */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-2">
+                      📅 Date de départ
+                    </label>
+                    <input
+                      type="date"
+                      value={segment.departureDate}
+                      onChange={(e) => updateSegment(index, 'departureDate', e.target.value)}
+                      min={
+                        index === 0 
+                          ? new Date().toISOString().split("T")[0]
+                          : multiCitySegments[index - 1]?.departureDate || new Date().toISOString().split("T")[0]
+                      }
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 font-medium cursor-pointer"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addSegment}
+              className="w-full py-4 border-2 border-dashed border-primary-400 rounded-lg text-primary-600 hover:bg-primary-50 hover:border-primary-600 transition-all font-semibold text-base"
+            >
+              ➕ Ajouter un vol
+            </button>
+          </div>
+        )}
+
+        {/* Dates - Seulement pour aller simple et aller-retour */}
+        {tripType !== "multicity" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {/* Date de départ */}
           <div className="space-y-2">
@@ -558,6 +789,7 @@ export default function FlightSearchForm() {
             </div>
           )}
         </div>
+        )}
 
         {/* Passagers et Classe */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -614,7 +846,8 @@ export default function FlightSearchForm() {
           <span>Rechercher des vols</span>
         </button>
 
-        {/* Options supplémentaires */}
+        {/* Options supplémentaires - Seulement pour aller simple et aller-retour */}
+        {tripType !== "multicity" && (
         <div className="flex flex-wrap gap-4 mt-4 text-sm">
           <label className="flex items-center space-x-2 cursor-pointer">
             <input
@@ -631,6 +864,7 @@ export default function FlightSearchForm() {
             <span className="text-gray-700">Vols directs uniquement</span>
           </label>
         </div>
+        )}
       </form>
     </div>
   );
