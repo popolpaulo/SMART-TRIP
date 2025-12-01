@@ -28,13 +28,26 @@ class FlightAggregatorService {
 
       logger.info(`Found ${allFlights.length} flights from Amadeus`);
 
-      if (allFlights.length === 0) {
+      // 2.1 Filtrer les compagnies de fret (non-passagers)
+      const EXCLUDED_CARRIERS = ['6X']; // AmeriJet International (fret)
+      const passengerFlights = allFlights.filter(flight => {
+        const hasExcludedCarrier = 
+          flight.outbound?.segments?.some(seg => EXCLUDED_CARRIERS.includes(seg.carrier)) ||
+          flight.inbound?.segments?.some(seg => EXCLUDED_CARRIERS.includes(seg.carrier)) ||
+          flight.validatingAirlineCodes?.some(code => EXCLUDED_CARRIERS.includes(code));
+        
+        return !hasExcludedCarrier;
+      });
+
+      logger.info(`Filtered to ${passengerFlights.length} passenger flights (excluded ${allFlights.length - passengerFlights.length} freight flights)`);
+
+      if (passengerFlights.length === 0) {
         throw new Error("Aucun vol trouvé sur les sources disponibles");
       }
 
       // 3. Dédupliquer les vols similaires (désactivé temporairement pour garder tous les vols)
-      // const uniqueFlights = this.deduplicateFlights(allFlights);
-      const uniqueFlights = allFlights; // Garder tous les vols sans déduplication
+      // const uniqueFlights = this.deduplicateFlights(passengerFlights);
+      const uniqueFlights = passengerFlights; // Garder tous les vols sans déduplication
 
       // 4. Scorer avec l'IA
       const scoredFlights = await aiService.scoreFlights(

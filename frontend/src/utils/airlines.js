@@ -50,7 +50,6 @@ export const airlines = {
   UA: { name: "United Airlines", logo: "https://images.kiwi.com/airlines/64/UA.png", booking: "https://www.united.com" },
   DL: { name: "Delta Air Lines", logo: "https://images.kiwi.com/airlines/64/DL.png", booking: "https://www.delta.com" },
   AC: { name: "Air Canada", logo: "https://images.kiwi.com/airlines/64/AC.png", booking: "https://www.aircanada.com" },
-  "6X": { name: "AmeriJet International", logo: "https://images.kiwi.com/airlines/64/6X.png", booking: "https://www.amerijet.com" },
   
   // Low-cost européennes
   FR: { name: "Ryanair", logo: "https://images.kiwi.com/airlines/64/FR.png", booking: "https://www.ryanair.com" },

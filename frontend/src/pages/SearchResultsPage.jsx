@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { searchFlights } from "../utils/api";
 import { getAirlineInfo, generateBookingLink } from "../utils/airlines";
-import PricePredictionCard from "../components/PricePredictionCard";
+
 
 export default function SearchResultsPage() {
   const [searchParams] = useSearchParams();
@@ -968,16 +968,6 @@ if (loading) {
                   )}
                 </div>
               )}
-
-              {/* Prédiction de prix */}
-              <div>
-                <PricePredictionCard
-                  origin={originCode}
-                  destination={destinationCode}
-                  departureDate={departureDate}
-                  cabinClass={cabinClass}
-                />
-              </div>
             </div>
           </div>
 
