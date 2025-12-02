@@ -1,17 +1,21 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const db = require('../database/connection');
-const logger = require('../utils/logger');
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const db = require("../database/connection");
+const logger = require("../utils/logger");
 
 // Inscription
 exports.register = async (req, res) => {
   try {
-    const { email, password, firstName, lastName, phone, dateOfBirth } = req.body;
+    const { email, password, firstName, lastName, phone, dateOfBirth } =
+      req.body;
 
     // Vérifier si l'utilisateur existe déjà
-    const existingUser = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+    const existingUser = await db.query(
+      "SELECT id FROM users WHERE email = $1",
+      [email]
+    );
     if (existingUser.rows.length > 0) {
-      return res.status(409).json({ error: 'Cet email est déjà utilisé' });
+      return res.status(409).json({ error: "Cet email est déjà utilisé" });
     }
 
     // Hasher le mot de passe
@@ -22,7 +26,14 @@ exports.register = async (req, res) => {
       `INSERT INTO users (email, password_hash, first_name, last_name, phone, date_of_birth)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, email, first_name, last_name, created_at`,
-      [email, passwordHash, firstName, lastName, phone || null, dateOfBirth || null]
+      [
+        email,
+        passwordHash,
+        firstName,
+        lastName,
+        phone || null,
+        dateOfBirth || null,
+      ]
     );
 
     const user = result.rows[0];
@@ -38,24 +49,24 @@ exports.register = async (req, res) => {
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE || '7d' }
+      { expiresIn: process.env.JWT_EXPIRE || "7d" }
     );
 
     logger.info(`Nouvel utilisateur inscrit: ${email}`);
 
     res.status(201).json({
-      message: 'Inscription réussie',
+      message: "Inscription réussie",
       user: {
         id: user.id,
         email: user.email,
         firstName: user.first_name,
-        lastName: user.last_name
+        lastName: user.last_name,
       },
-      token
+      token,
     });
   } catch (error) {
-    logger.error('Erreur lors de l\'inscription:', error);
-    res.status(500).json({ error: 'Erreur lors de l\'inscription' });
+    logger.error("Erreur lors de l'inscription:", error);
+    res.status(500).json({ error: "Erreur lors de l'inscription" });
   }
 };
 
@@ -66,86 +77,86 @@ exports.login = async (req, res) => {
 
     // Trouver l'utilisateur
     const result = await db.query(
-      'SELECT id, email, password_hash, first_name, last_name, is_active FROM users WHERE email = $1',
+      "SELECT id, email, password_hash, first_name, last_name, is_active FROM users WHERE email = $1",
       [email]
     );
 
     if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
+      return res.status(401).json({ error: "Email ou mot de passe incorrect" });
     }
 
     const user = result.rows[0];
 
     // Vérifier si le compte est actif
     if (!user.is_active) {
-      return res.status(403).json({ error: 'Compte désactivé' });
+      return res.status(403).json({ error: "Compte désactivé" });
     }
 
     // Vérifier le mot de passe
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
+      return res.status(401).json({ error: "Email ou mot de passe incorrect" });
     }
 
     // Générer un token JWT
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE || '7d' }
+      { expiresIn: process.env.JWT_EXPIRE || "7d" }
     );
 
     logger.info(`Connexion réussie: ${email}`);
 
     res.json({
-      message: 'Connexion réussie',
+      message: "Connexion réussie",
       user: {
         id: user.id,
         email: user.email,
         firstName: user.first_name,
-        lastName: user.last_name
+        lastName: user.last_name,
       },
-      token
+      token,
     });
   } catch (error) {
-    logger.error('Erreur lors de la connexion:', error);
-    res.status(500).json({ error: 'Erreur lors de la connexion' });
+    logger.error("Erreur lors de la connexion:", error);
+    res.status(500).json({ error: "Erreur lors de la connexion" });
   }
 };
 
 // Vérifier le token
 exports.verifyToken = async (req, res) => {
   try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
 
     if (!token) {
-      return res.status(401).json({ error: 'Token manquant' });
+      return res.status(401).json({ error: "Token manquant" });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Vérifier que l'utilisateur existe toujours
     const result = await db.query(
-      'SELECT id, email, first_name, last_name FROM users WHERE id = $1 AND is_active = true',
+      "SELECT id, email, first_name, last_name FROM users WHERE id = $1 AND is_active = true",
       [decoded.id]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Utilisateur introuvable' });
+      return res.status(404).json({ error: "Utilisateur introuvable" });
     }
 
     res.json({
       valid: true,
-      user: result.rows[0]
+      user: result.rows[0],
     });
   } catch (error) {
-    res.status(403).json({ error: 'Token invalide ou expiré' });
+    res.status(403).json({ error: "Token invalide ou expiré" });
   }
 };
 
 // Déconnexion (côté client principalement)
 exports.logout = (req, res) => {
-  res.json({ message: 'Déconnexion réussie' });
+  res.json({ message: "Déconnexion réussie" });
 };
 
 // Récupérer le profil utilisateur
@@ -157,9 +168,9 @@ exports.getProfile = async (req, res) => {
       `SELECT 
         u.id, u.email, u.first_name, u.last_name, u.phone, 
         u.date_of_birth, u.nationality, u.avatar_url, u.created_at,
-        p.budget_range, p.preferred_class, p.preferred_airlines, 
-        p.comfort_level, p.travel_style, p.max_stops, p.seat_preference,
-        p.meal_preference, p.accessibility_needs, p.newsletter_subscribed
+        p.budget_preference, p.preferred_airlines, 
+        p.comfort_preference, p.max_layovers, p.seat_preference,
+        p.meal_preference
       FROM users u
       LEFT JOIN user_profiles p ON u.id = p.user_id
       WHERE u.id = $1 AND u.is_active = true`,
@@ -167,7 +178,7 @@ exports.getProfile = async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Utilisateur introuvable' });
+      return res.status(404).json({ error: "Utilisateur introuvable" });
     }
 
     const user = result.rows[0];
@@ -183,22 +194,18 @@ exports.getProfile = async (req, res) => {
         avatarUrl: user.avatar_url,
         createdAt: user.created_at,
         profile: {
-          budgetRange: user.budget_range,
-          preferredClass: user.preferred_class,
+          budgetPreference: user.budget_preference,
           preferredAirlines: user.preferred_airlines,
-          comfortLevel: user.comfort_level,
-          travelStyle: user.travel_style,
-          maxStops: user.max_stops,
+          comfortPreference: user.comfort_preference,
+          maxLayovers: user.max_layovers,
           seatPreference: user.seat_preference,
           mealPreference: user.meal_preference,
-          accessibilityNeeds: user.accessibility_needs,
-          newsletterSubscribed: user.newsletter_subscribed
-        }
-      }
+        },
+      },
     });
   } catch (error) {
-    logger.error('Erreur lors de la récupération du profil:', error);
-    res.status(500).json({ error: 'Erreur lors de la récupération du profil' });
+    logger.error("Erreur lors de la récupération du profil:", error);
+    res.status(500).json({ error: "Erreur lors de la récupération du profil" });
   }
 };
 
@@ -207,10 +214,17 @@ exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
     const {
-      firstName, lastName, phone, dateOfBirth, nationality,
-      budgetRange, preferredClass, preferredAirlines, comfortLevel,
-      travelStyle, maxStops, seatPreference, mealPreference,
-      accessibilityNeeds, newsletterSubscribed
+      firstName,
+      lastName,
+      phone,
+      dateOfBirth,
+      nationality,
+      budgetPreference,
+      preferredAirlines,
+      comfortPreference,
+      maxLayovers,
+      seatPreference,
+      mealPreference,
     } = req.body;
 
     // Mettre à jour les infos de base
@@ -229,21 +243,23 @@ exports.updateProfile = async (req, res) => {
     // Mettre à jour le profil
     await db.query(
       `UPDATE user_profiles 
-       SET budget_range = COALESCE($1, budget_range),
-           preferred_class = COALESCE($2, preferred_class),
-           preferred_airlines = COALESCE($3, preferred_airlines),
-           comfort_level = COALESCE($4, comfort_level),
-           travel_style = COALESCE($5, travel_style),
-           max_stops = COALESCE($6, max_stops),
-           seat_preference = COALESCE($7, seat_preference),
-           meal_preference = COALESCE($8, meal_preference),
-           accessibility_needs = COALESCE($9, accessibility_needs),
-           newsletter_subscribed = COALESCE($10, newsletter_subscribed),
+       SET budget_preference = COALESCE($1, budget_preference),
+           preferred_airlines = COALESCE($2, preferred_airlines),
+           comfort_preference = COALESCE($3, comfort_preference),
+           max_layovers = COALESCE($4, max_layovers),
+           seat_preference = COALESCE($5, seat_preference),
+           meal_preference = COALESCE($6, meal_preference),
            updated_at = CURRENT_TIMESTAMP
-       WHERE user_id = $11`,
-      [budgetRange, preferredClass, preferredAirlines, comfortLevel,
-       travelStyle, maxStops, seatPreference, mealPreference,
-       accessibilityNeeds, newsletterSubscribed, userId]
+       WHERE user_id = $7`,
+      [
+        budgetPreference,
+        preferredAirlines,
+        comfortPreference,
+        maxLayovers,
+        seatPreference,
+        mealPreference,
+        userId,
+      ]
     );
 
     logger.info(`Profil mis à jour pour l'utilisateur: ${userId}`);
@@ -253,9 +269,9 @@ exports.updateProfile = async (req, res) => {
       `SELECT 
         u.id, u.email, u.first_name, u.last_name, u.phone, 
         u.date_of_birth, u.nationality, u.avatar_url,
-        p.budget_range, p.preferred_class, p.preferred_airlines, 
-        p.comfort_level, p.travel_style, p.max_stops, p.seat_preference,
-        p.meal_preference, p.accessibility_needs, p.newsletter_subscribed
+        p.budget_preference, p.preferred_airlines, 
+        p.comfort_preference, p.max_layovers, p.seat_preference,
+        p.meal_preference
       FROM users u
       LEFT JOIN user_profiles p ON u.id = p.user_id
       WHERE u.id = $1`,
@@ -264,7 +280,7 @@ exports.updateProfile = async (req, res) => {
 
     const user = result.rows[0];
     res.json({
-      message: 'Profil mis à jour avec succès',
+      message: "Profil mis à jour avec succès",
       user: {
         id: user.id,
         email: user.email,
@@ -275,21 +291,17 @@ exports.updateProfile = async (req, res) => {
         nationality: user.nationality,
         avatarUrl: user.avatar_url,
         profile: {
-          budgetRange: user.budget_range,
-          preferredClass: user.preferred_class,
+          budgetPreference: user.budget_preference,
           preferredAirlines: user.preferred_airlines,
-          comfortLevel: user.comfort_level,
-          travelStyle: user.travel_style,
-          maxStops: user.max_stops,
+          comfortPreference: user.comfort_preference,
+          maxLayovers: user.max_layovers,
           seatPreference: user.seat_preference,
           mealPreference: user.meal_preference,
-          accessibilityNeeds: user.accessibility_needs,
-          newsletterSubscribed: user.newsletter_subscribed
-        }
-      }
+        },
+      },
     });
   } catch (error) {
-    logger.error('Erreur lors de la mise à jour du profil:', error);
-    res.status(500).json({ error: 'Erreur lors de la mise à jour du profil' });
+    logger.error("Erreur lors de la mise à jour du profil:", error);
+    res.status(500).json({ error: "Erreur lors de la mise à jour du profil" });
   }
 };

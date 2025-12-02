@@ -1,12 +1,12 @@
-import { Plane, Menu, User, Heart, LogOut, UserCircle } from 'lucide-react'
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { Plane, Menu, User, Heart, LogOut, UserCircle } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Layout({ children }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
-  const { user, isAuthenticated, logout } = useAuth()
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -24,18 +24,30 @@ export default function Layout({ children }) {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link to="/" className="text-gray-700 hover:text-primary-600 font-medium transition">
+              <Link
+                to="/"
+                className="text-gray-700 hover:text-primary-600 font-medium transition"
+              >
                 Vols
               </Link>
-              <Link to="/hotels" className="text-gray-700 hover:text-primary-600 font-medium transition">
+              <Link
+                to="/hotels"
+                className="text-gray-700 hover:text-primary-600 font-medium transition"
+              >
                 Hôtels
               </Link>
               {isAuthenticated && (
                 <>
-                  <Link to="/trips" className="text-gray-700 hover:text-primary-600 font-medium transition">
+                  <Link
+                    to="/trips"
+                    className="text-gray-700 hover:text-primary-600 font-medium transition"
+                  >
                     Mes voyages
                   </Link>
-                  <Link to="/alerts" className="text-gray-700 hover:text-primary-600 font-medium transition">
+                  <Link
+                    to="/alerts"
+                    className="text-gray-700 hover:text-primary-600 font-medium transition"
+                  >
                     Alertes prix
                   </Link>
                 </>
@@ -46,9 +58,13 @@ export default function Layout({ children }) {
             <div className="hidden md:flex items-center space-x-4">
               {isAuthenticated ? (
                 <>
-                  <button className="p-2 text-gray-600 hover:text-primary-600 transition">
+                  <Link
+                    to="/favorites"
+                    className="p-2 text-gray-600 hover:text-red-500 transition"
+                    title="Mes favoris"
+                  >
                     <Heart className="h-5 w-5" />
-                  </button>
+                  </Link>
                   <div className="relative">
                     <button
                       onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -57,7 +73,7 @@ export default function Layout({ children }) {
                       <UserCircle className="h-5 w-5" />
                       <span className="font-medium">{user?.firstName}</span>
                     </button>
-                    
+
                     {/* Dropdown menu */}
                     {isUserMenuOpen && (
                       <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 border border-gray-200">
@@ -107,21 +123,36 @@ export default function Layout({ children }) {
           {isMenuOpen && (
             <div className="md:hidden py-4 border-t">
               <div className="flex flex-col space-y-3">
-                <Link to="/" className="text-gray-700 hover:text-primary-600 font-medium">
+                <Link
+                  to="/"
+                  className="text-gray-700 hover:text-primary-600 font-medium"
+                >
                   Vols
                 </Link>
-                <Link to="/hotels" className="text-gray-700 hover:text-primary-600 font-medium">
+                <Link
+                  to="/hotels"
+                  className="text-gray-700 hover:text-primary-600 font-medium"
+                >
                   Hôtels
                 </Link>
                 {isAuthenticated && (
                   <>
-                    <Link to="/trips" className="text-gray-700 hover:text-primary-600 font-medium">
+                    <Link
+                      to="/trips"
+                      className="text-gray-700 hover:text-primary-600 font-medium"
+                    >
                       Mes voyages
                     </Link>
-                    <Link to="/alerts" className="text-gray-700 hover:text-primary-600 font-medium">
+                    <Link
+                      to="/alerts"
+                      className="text-gray-700 hover:text-primary-600 font-medium"
+                    >
                       Alertes prix
                     </Link>
-                    <Link to="/profile" className="text-gray-700 hover:text-primary-600 font-medium">
+                    <Link
+                      to="/profile"
+                      className="text-gray-700 hover:text-primary-600 font-medium"
+                    >
                       Mon profil
                     </Link>
                     <button
@@ -144,9 +175,7 @@ export default function Layout({ children }) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1">
-        {children}
-      </main>
+      <main className="flex-1">{children}</main>
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white">
@@ -158,37 +187,86 @@ export default function Layout({ children }) {
                 <span className="text-xl font-bold">SMART TRIP</span>
               </div>
               <p className="text-gray-400 text-sm">
-                Comparez les vols, trouvez les meilleures offres et planifiez votre voyage parfait avec l'IA.
+                Comparez les vols, trouvez les meilleures offres et planifiez
+                votre voyage parfait avec l'IA.
               </p>
             </div>
 
             <div>
               <h3 className="font-semibold mb-4">Produits</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition">Vols</a></li>
-                <li><a href="#" className="hover:text-white transition">Hôtels</a></li>
-                <li><a href="#" className="hover:text-white transition">Forfaits</a></li>
-                <li><a href="#" className="hover:text-white transition">Activités</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition">
+                    Vols
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition">
+                    Hôtels
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition">
+                    Forfaits
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition">
+                    Activités
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h3 className="font-semibold mb-4">Entreprise</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition">À propos</a></li>
-                <li><a href="#" className="hover:text-white transition">Carrières</a></li>
-                <li><a href="#" className="hover:text-white transition">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition">Presse</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition">
+                    À propos
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition">
+                    Carrières
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition">
+                    Presse
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition">Centre d'aide</a></li>
-                <li><a href="#" className="hover:text-white transition">Contact</a></li>
-                <li><a href="#" className="hover:text-white transition">Conditions</a></li>
-                <li><a href="#" className="hover:text-white transition">Confidentialité</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition">
+                    Centre d'aide
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition">
+                    Contact
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition">
+                    Conditions
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition">
+                    Confidentialité
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
@@ -199,5 +277,5 @@ export default function Layout({ children }) {
         </div>
       </footer>
     </div>
-  )
+  );
 }

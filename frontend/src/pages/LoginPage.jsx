@@ -19,13 +19,13 @@ export default function LoginPage() {
     setLoading(true);
 
     const result = await login(formData.email, formData.password);
-    
+
     if (result.success) {
       navigate("/");
     } else {
       setError(result.error || "Erreur lors de la connexion");
     }
-    
+
     setLoading(false);
   };
 
@@ -134,10 +134,7 @@ export default function LoginPage() {
 
         {/* Retour à l'accueil */}
         <div className="mt-6 text-center">
-          <Link
-            to="/"
-            className="text-sm text-gray-600 hover:text-gray-900"
-          >
+          <Link to="/" className="text-sm text-gray-600 hover:text-gray-900">
             ← Retour à l'accueil
           </Link>
         </div>

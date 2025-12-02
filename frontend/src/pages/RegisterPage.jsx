@@ -47,7 +47,7 @@ export default function RegisterPage() {
     } else {
       setError(result.error || "Erreur lors de l'inscription");
     }
-    
+
     setLoading(false);
   };
 
@@ -142,7 +142,8 @@ export default function RegisterPage() {
             {/* Téléphone (optionnel) */}
             <div>
               <label htmlFor="phone" className="label">
-                Téléphone <span className="text-gray-400 text-xs">(optionnel)</span>
+                Téléphone{" "}
+                <span className="text-gray-400 text-xs">(optionnel)</span>
               </label>
               <input
                 id="phone"
@@ -175,9 +176,7 @@ export default function RegisterPage() {
                   }
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-500">
-                Minimum 6 caractères
-              </p>
+              <p className="mt-1 text-xs text-gray-500">Minimum 6 caractères</p>
             </div>
 
             {/* Confirmation mot de passe */}
@@ -195,7 +194,10 @@ export default function RegisterPage() {
                   placeholder="••••••••"
                   value={formData.confirmPassword}
                   onChange={(e) =>
-                    setFormData({ ...formData, confirmPassword: e.target.value })
+                    setFormData({
+                      ...formData,
+                      confirmPassword: e.target.value,
+                    })
                   }
                 />
               </div>
@@ -237,10 +239,7 @@ export default function RegisterPage() {
 
         {/* Retour à l'accueil */}
         <div className="mt-6 text-center">
-          <Link
-            to="/"
-            className="text-sm text-gray-600 hover:text-gray-900"
-          >
+          <Link to="/" className="text-sm text-gray-600 hover:text-gray-900">
             ← Retour à l'accueil
           </Link>
         </div>

@@ -3,6 +3,7 @@
 ## Backend - Routes API
 
 ### 1. Test d'inscription
+
 ```powershell
 $body = @{
     email = "test@smarttrip.com"
@@ -20,6 +21,7 @@ Invoke-WebRequest -Uri http://localhost:3000/api/auth/register `
 ```
 
 ### 2. Test de connexion
+
 ```powershell
 $body = @{
     email = "test@smarttrip.com"
@@ -38,6 +40,7 @@ Write-Host "Token: $token"
 ```
 
 ### 3. Test de récupération du profil
+
 ```powershell
 # Utiliser le token obtenu lors de la connexion
 $headers = @{
@@ -50,6 +53,7 @@ Invoke-WebRequest -Uri http://localhost:3000/api/auth/profile `
 ```
 
 ### 4. Test de mise à jour du profil
+
 ```powershell
 $body = @{
     firstName = "Jean-Paul"
@@ -74,6 +78,7 @@ Invoke-WebRequest -Uri http://localhost:3000/api/auth/profile `
 ```
 
 ### 5. Test de vérification du token
+
 ```powershell
 $headers = @{
     "Authorization" = "Bearer $token"
@@ -87,6 +92,7 @@ Invoke-WebRequest -Uri http://localhost:3000/api/auth/verify `
 ## Frontend - Tests manuels
 
 ### 1. Test d'inscription
+
 - Aller sur http://localhost:5173/register
 - Remplir le formulaire avec :
   - Prénom: Jean
@@ -100,6 +106,7 @@ Invoke-WebRequest -Uri http://localhost:3000/api/auth/verify `
 - Vérifier que le nom s'affiche dans le header
 
 ### 2. Test de connexion
+
 - Se déconnecter (menu utilisateur > Déconnexion)
 - Aller sur http://localhost:5173/login
 - Se connecter avec :
@@ -108,6 +115,7 @@ Invoke-WebRequest -Uri http://localhost:3000/api/auth/verify `
 - Vérifier la redirection et l'affichage du nom
 
 ### 3. Test du profil
+
 - Cliquer sur le menu utilisateur > Mon profil
 - Onglet "Informations personnelles" :
   - Modifier le téléphone
@@ -123,11 +131,13 @@ Invoke-WebRequest -Uri http://localhost:3000/api/auth/verify `
 - Recharger la page et vérifier que les modifications sont persistées
 
 ### 4. Test de route protégée
+
 - Se déconnecter
 - Essayer d'accéder directement à http://localhost:5173/profile
 - Vérifier la redirection automatique vers /login
 
 ### 5. Test de persistance
+
 - Se connecter
 - Fermer le navigateur
 - Rouvrir http://localhost:5173
@@ -136,11 +146,13 @@ Invoke-WebRequest -Uri http://localhost:3000/api/auth/verify `
 ## Vérifications base de données
 
 ### Vérifier les utilisateurs créés
+
 ```powershell
 docker exec -it smarttrip_db psql -U smarttrip_user -d smarttrip_dev -c "SELECT id, email, first_name, last_name, created_at FROM users ORDER BY created_at DESC LIMIT 5;"
 ```
 
 ### Vérifier les profils utilisateurs
+
 ```powershell
 docker exec -it smarttrip_db psql -U smarttrip_user -d smarttrip_dev -c "SELECT u.email, p.budget_range, p.preferred_class, p.travel_style FROM users u LEFT JOIN user_profiles p ON u.id = p.user_id LIMIT 5;"
 ```
@@ -148,22 +160,27 @@ docker exec -it smarttrip_db psql -U smarttrip_user -d smarttrip_dev -c "SELECT 
 ## Cas d'erreur à tester
 
 ### 1. Email déjà utilisé
+
 - Essayer de créer un compte avec un email existant
 - Vérifier le message d'erreur: "Cet email est déjà utilisé"
 
 ### 2. Mot de passe trop court
+
 - Essayer de créer un compte avec un mot de passe < 6 caractères
 - Vérifier le message d'erreur
 
 ### 3. Mots de passe différents
+
 - Remplir mot de passe et confirmation avec des valeurs différentes
 - Vérifier le message: "Les mots de passe ne correspondent pas"
 
 ### 4. Mauvais identifiants
+
 - Essayer de se connecter avec un mauvais email ou mot de passe
 - Vérifier le message: "Email ou mot de passe incorrect"
 
 ### 5. Token invalide
+
 - Modifier manuellement le token dans localStorage
 - Recharger la page
 - Vérifier que l'utilisateur est déconnecté automatiquement

@@ -15,6 +15,7 @@ const hotelRoutes = require("./src/routes/hotel.routes");
 const tripRoutes = require("./src/routes/trip.routes");
 const searchRoutes = require("./src/routes/search.routes");
 const alertRoutes = require("./src/routes/alert.routes");
+const favoriteRoutes = require("./src/routes/favorite.routes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -83,6 +84,7 @@ app.use("/api/hotels", hotelRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/alerts", alertRoutes);
+app.use("/api/favorites", favoriteRoutes);
 
 // Route par défaut
 app.get("/", (req, res) => {
@@ -98,6 +100,7 @@ app.get("/", (req, res) => {
       trips: "/api/trips",
       search: "/api/search",
       alerts: "/api/alerts",
+      favorites: "/api/favorites",
     },
   });
 });

@@ -304,42 +304,54 @@ export default function FlightSearchForm() {
   return (
     <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-5xl mx-auto">
       {/* Type de voyage */}
-      <div className="flex flex-wrap gap-4 mb-6">
+      <div className="flex flex-wrap gap-4 mb-6 justify-between items-center">
+        <div className="flex flex-wrap gap-4">
+          <button
+            onClick={() => setTripType("roundtrip")}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              tripType === "roundtrip"
+                ? "bg-primary-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            Aller-retour
+          </button>
+          <button
+            onClick={() => setTripType("oneway")}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              tripType === "oneway"
+                ? "bg-primary-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            Aller simple
+          </button>
+          <button
+            onClick={() => setTripType("multicity")}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              tripType === "multicity"
+                ? "bg-primary-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            Multi-destinations
+          </button>
+        </div>
+
+        {/* Bouton swap - version compacte en haut à droite */}
         <button
-          onClick={() => setTripType("roundtrip")}
-          className={`px-4 py-2 rounded-lg font-medium transition ${
-            tripType === "roundtrip"
-              ? "bg-primary-600 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
+          type="button"
+          onClick={swapLocations}
+          className="bg-white border-2 border-primary-600 rounded-full p-2 text-primary-600 hover:bg-primary-600 hover:text-white transition-all duration-200 shadow-md hover:shadow-lg"
+          title="Inverser départ/arrivée"
         >
-          Aller-retour
-        </button>
-        <button
-          onClick={() => setTripType("oneway")}
-          className={`px-4 py-2 rounded-lg font-medium transition ${
-            tripType === "oneway"
-              ? "bg-primary-600 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          Aller simple
-        </button>
-        <button
-          onClick={() => setTripType("multicity")}
-          className={`px-4 py-2 rounded-lg font-medium transition ${
-            tripType === "multicity"
-              ? "bg-primary-600 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          Multi-destinations
+          <ArrowRightLeft className="h-4 w-4" />
         </button>
       </div>
 
       <form onSubmit={handleSubmit}>
         {/* Origine et Destination */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 relative">
           {/* Origine */}
           <div className="relative">
             <label className="label">
@@ -483,16 +495,6 @@ export default function FlightSearchForm() {
                   ))}
                 </div>
               )}
-
-            {/* Bouton swap */}
-            <button
-              type="button"
-              onClick={swapLocations}
-              className="absolute -left-4 top-1/2 -translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:top-auto md:bottom-4 md:translate-y-0 bg-white border-2 border-primary-600 rounded-full p-2 text-primary-600 hover:bg-primary-50 transition z-10"
-              title="Inverser départ/arrivée"
-            >
-              <ArrowRightLeft className="h-4 w-4" />
-            </button>
           </div>
         </div>
 

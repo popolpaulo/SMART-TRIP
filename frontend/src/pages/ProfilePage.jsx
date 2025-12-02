@@ -30,14 +30,11 @@ export default function ProfilePage() {
     phone: "",
     dateOfBirth: "",
     nationality: "",
-    budgetRange: "",
-    preferredClass: "",
-    comfortLevel: "",
-    travelStyle: "",
-    maxStops: 1,
+    budgetPreference: "",
+    comfortPreference: "",
+    maxLayovers: 1,
     seatPreference: "",
     mealPreference: "",
-    newsletterSubscribed: true,
   });
 
   useEffect(() => {
@@ -56,14 +53,11 @@ export default function ProfilePage() {
         phone: result.user.phone || "",
         dateOfBirth: result.user.dateOfBirth || "",
         nationality: result.user.nationality || "",
-        budgetRange: result.user.profile?.budgetRange || "",
-        preferredClass: result.user.profile?.preferredClass || "",
-        comfortLevel: result.user.profile?.comfortLevel || "",
-        travelStyle: result.user.profile?.travelStyle || "",
-        maxStops: result.user.profile?.maxStops || 1,
+        budgetPreference: result.user.profile?.budgetPreference || "",
+        comfortPreference: result.user.profile?.comfortPreference || "",
+        maxLayovers: result.user.profile?.maxLayovers || 1,
         seatPreference: result.user.profile?.seatPreference || "",
         mealPreference: result.user.profile?.mealPreference || "",
-        newsletterSubscribed: result.user.profile?.newsletterSubscribed ?? true,
       });
     }
     setLoading(false);
@@ -304,58 +298,35 @@ export default function ProfilePage() {
                     </label>
                     <select
                       className="input"
-                      value={formData.budgetRange}
+                      value={formData.budgetPreference}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          budgetRange: e.target.value,
+                          budgetPreference: e.target.value,
                         })
                       }
                     >
                       <option value="">Sélectionner</option>
-                      <option value="low">Économique (&lt; 500€)</option>
-                      <option value="medium">Standard (500-1500€)</option>
-                      <option value="high">Premium (1500-3000€)</option>
+                      <option value="economy">Économique (&lt; 500€)</option>
+                      <option value="moderate">Standard (500-1500€)</option>
+                      <option value="premium">Premium (1500-3000€)</option>
                       <option value="luxury">Luxe (&gt; 3000€)</option>
-                    </select>
-                  </div>
-
-                  {/* Classe préférée */}
-                  <div>
-                    <label className="label">
-                      <Plane className="h-4 w-4 inline mr-1" />
-                      Classe de vol préférée
-                    </label>
-                    <select
-                      className="input"
-                      value={formData.preferredClass}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          preferredClass: e.target.value,
-                        })
-                      }
-                    >
-                      <option value="">Sélectionner</option>
-                      <option value="economy">Économique</option>
-                      <option value="premium_economy">
-                        Économique Premium
-                      </option>
-                      <option value="business">Affaires</option>
-                      <option value="first">Première Classe</option>
                     </select>
                   </div>
 
                   {/* Niveau de confort */}
                   <div>
-                    <label className="label">Niveau de confort</label>
+                    <label className="label">
+                      <Plane className="h-4 w-4 inline mr-1" />
+                      Niveau de confort
+                    </label>
                     <select
                       className="input"
-                      value={formData.comfortLevel}
+                      value={formData.comfortPreference}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          comfortLevel: e.target.value,
+                          comfortPreference: e.target.value,
                         })
                       }
                     >
@@ -363,46 +334,26 @@ export default function ProfilePage() {
                       <option value="basic">Basique</option>
                       <option value="standard">Standard</option>
                       <option value="premium">Premium</option>
-                    </select>
-                  </div>
-
-                  {/* Style de voyage */}
-                  <div>
-                    <label className="label">
-                      <Heart className="h-4 w-4 inline mr-1" />
-                      Style de voyage
-                    </label>
-                    <select
-                      className="input"
-                      value={formData.travelStyle}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          travelStyle: e.target.value,
-                        })
-                      }
-                    >
-                      <option value="">Sélectionner</option>
-                      <option value="adventure">Aventure</option>
-                      <option value="relax">Détente</option>
-                      <option value="romantic">Romantique</option>
-                      <option value="cultural">Culturel</option>
+                      <option value="luxury">Luxe</option>
                     </select>
                   </div>
 
                   {/* Escales maximales */}
                   <div>
-                    <label className="label">Escales maximales</label>
+                    <label className="label">
+                      <Heart className="h-4 w-4 inline mr-1" />
+                      Escales maximales
+                    </label>
                     <input
                       type="number"
                       min="0"
                       max="3"
                       className="input"
-                      value={formData.maxStops}
+                      value={formData.maxLayovers}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          maxStops: parseInt(e.target.value),
+                          maxLayovers: parseInt(e.target.value),
                         })
                       }
                     />
