@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 import HomePage from "./pages/HomePage";
@@ -16,8 +17,9 @@ function App() {
   return (
     <ErrorBoundary>
       <Router>
-        <AuthProvider>
-          <Layout>
+        <ThemeProvider>
+          <AuthProvider>
+            <Layout>
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/search" element={<SearchResultsPage />} />
@@ -37,9 +39,10 @@ function App() {
             </Routes>
           </Layout>
         </AuthProvider>
-      </Router>
-    </ErrorBoundary>
-  );
+      </ThemeProvider>
+    </Router>
+  </ErrorBoundary>
+);
 }
 
 export default App;

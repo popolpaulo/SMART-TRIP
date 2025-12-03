@@ -33,7 +33,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section avec gradient */}
-      <div className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 text-white overflow-hidden">
+      <div className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 dark:from-gray-900 dark:via-slate-900 dark:to-gray-950 text-white overflow-hidden">
         {/* Pattern de fond */}
         <div className="absolute inset-0 opacity-10">
           <div
@@ -120,7 +120,7 @@ export default function HomePage() {
       <FeaturesSection />
 
       {/* CTA Section */}
-      <div className="bg-gradient-to-r from-purple-600 via-primary-600 to-pink-600 text-white">
+      <div className="bg-gradient-to-r from-purple-600 via-primary-600 to-pink-600 dark:from-purple-900 dark:via-blue-900 dark:to-indigo-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
             <Brain className="h-5 w-5" />

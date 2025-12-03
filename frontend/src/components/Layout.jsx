@@ -2,6 +2,7 @@ import { Plane, Menu, User, Heart, LogOut, UserCircle } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Layout({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -9,15 +10,15 @@ export default function Layout({ children }) {
   const { user, isAuthenticated, logout } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900 transition-colors">
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
+      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50 transition-colors">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2">
               <Plane className="h-8 w-8 text-primary-600" />
-              <span className="text-2xl font-bold text-gray-900">
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">
                 SMART <span className="text-primary-600">TRIP</span>
               </span>
             </Link>
@@ -26,13 +27,13 @@ export default function Layout({ children }) {
             <div className="hidden md:flex items-center space-x-8">
               <Link
                 to="/"
-                className="text-gray-700 hover:text-primary-600 font-medium transition"
+                className="text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition"
               >
                 Vols
               </Link>
               <Link
                 to="/hotels"
-                className="text-gray-700 hover:text-primary-600 font-medium transition"
+                className="text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition"
               >
                 Hôtels
               </Link>
@@ -40,13 +41,13 @@ export default function Layout({ children }) {
                 <>
                   <Link
                     to="/trips"
-                    className="text-gray-700 hover:text-primary-600 font-medium transition"
+                    className="text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition"
                   >
                     Mes voyages
                   </Link>
                   <Link
                     to="/alerts"
-                    className="text-gray-700 hover:text-primary-600 font-medium transition"
+                    className="text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition"
                   >
                     Alertes prix
                   </Link>
@@ -56,11 +57,12 @@ export default function Layout({ children }) {
 
             {/* User Menu */}
             <div className="hidden md:flex items-center space-x-4">
+              <ThemeToggle />
               {isAuthenticated ? (
                 <>
                   <Link
                     to="/favorites"
-                    className="p-2 text-gray-600 hover:text-red-500 transition"
+                    className="p-2 text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition"
                     title="Mes favoris"
                   >
                     <Heart className="h-5 w-5" />
@@ -68,7 +70,7 @@ export default function Layout({ children }) {
                   <div className="relative">
                     <button
                       onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                      className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-primary-600 border border-gray-300 rounded-lg transition"
+                      className="flex items-center space-x-2 px-4 py-2 text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 border border-gray-300 dark:border-gray-600 rounded-lg transition"
                     >
                       <UserCircle className="h-5 w-5" />
                       <span className="font-medium">{user?.firstName}</span>
@@ -76,10 +78,10 @@ export default function Layout({ children }) {
 
                     {/* Dropdown menu */}
                     {isUserMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 border border-gray-200">
+                      <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 border border-gray-200 dark:border-gray-700">
                         <Link
                           to="/profile"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                           onClick={() => setIsUserMenuOpen(false)}
                         >
                           <User className="h-4 w-4 inline mr-2" />
@@ -90,7 +92,7 @@ export default function Layout({ children }) {
                             setIsUserMenuOpen(false);
                             logout();
                           }}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
                           <LogOut className="h-4 w-4 inline mr-2" />
                           Déconnexion
@@ -102,7 +104,7 @@ export default function Layout({ children }) {
               ) : (
                 <Link
                   to="/login"
-                  className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-primary-600 border border-gray-300 rounded-lg transition"
+                  className="flex items-center space-x-2 px-4 py-2 text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 border border-gray-300 dark:border-gray-600 rounded-lg transition"
                 >
                   <User className="h-5 w-5" />
                   <span className="font-medium">Connexion</span>
@@ -113,7 +115,7 @@ export default function Layout({ children }) {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 text-gray-600 hover:text-primary-600"
+              className="md:hidden p-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
             >
               <Menu className="h-6 w-6" />
             </button>
@@ -121,17 +123,18 @@ export default function Layout({ children }) {
 
           {/* Mobile Navigation */}
           {isMenuOpen && (
-            <div className="md:hidden py-4 border-t">
+            <div className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700">
               <div className="flex flex-col space-y-3">
+                <ThemeToggle />
                 <Link
                   to="/"
-                  className="text-gray-700 hover:text-primary-600 font-medium"
+                  className="text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 font-medium"
                 >
                   Vols
                 </Link>
                 <Link
                   to="/hotels"
-                  className="text-gray-700 hover:text-primary-600 font-medium"
+                  className="text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 font-medium"
                 >
                   Hôtels
                 </Link>
@@ -139,13 +142,13 @@ export default function Layout({ children }) {
                   <>
                     <Link
                       to="/trips"
-                      className="text-gray-700 hover:text-primary-600 font-medium"
+                      className="text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 font-medium"
                     >
                       Mes voyages
                     </Link>
                     <Link
                       to="/alerts"
-                      className="text-gray-700 hover:text-primary-600 font-medium"
+                      className="text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 font-medium"
                     >
                       Alertes prix
                     </Link>

@@ -66,20 +66,20 @@ export default function FeaturesSection() {
   ];
 
   return (
-    <div className="py-20 bg-white">
+    <div className="py-20 bg-white dark:bg-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* En-tête */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-full mb-4">
+          <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-800 dark:to-pink-800 text-white px-4 py-2 rounded-full mb-4">
             <Sparkles className="h-5 w-5" />
             <span className="font-semibold">
               Intelligence Artificielle Avancée
             </span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             Pourquoi choisir SMART TRIP ?
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             La première plateforme propulsée par IA avec scoring en temps réel
             et prédictions ML pour trouver le vol parfait
           </p>
@@ -90,7 +90,7 @@ export default function FeaturesSection() {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="group p-6 rounded-xl border border-gray-200 hover:border-primary-300 hover:shadow-lg transition-all duration-300 relative"
+              className="group p-6 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-lg transition-all duration-300 relative"
             >
               {feature.badge && (
                 <div className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
@@ -102,16 +102,16 @@ export default function FeaturesSection() {
               >
                 <feature.icon className={`h-6 w-6 ${feature.color}`} />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 {feature.title}
               </h3>
-              <p className="text-gray-600">{feature.description}</p>
+              <p className="text-gray-600 dark:text-gray-300">{feature.description}</p>
             </div>
           ))}
         </div>
 
         {/* Testimonial */}
-        <div className="mt-20 bg-gradient-to-r from-purple-50 via-blue-50 to-indigo-50 rounded-2xl p-8 md:p-12">
+        <div className="mt-20 bg-gradient-to-r from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-800 dark:via-gray-850 dark:to-gray-900 rounded-2xl p-8 md:p-12">
           <div className="max-w-3xl mx-auto text-center">
             <div className="flex items-center justify-center space-x-1 mb-4">
               <span className="text-4xl">⭐⭐⭐⭐⭐</span>
@@ -119,7 +119,7 @@ export default function FeaturesSection() {
                 Score IA: 98/100
               </span>
             </div>
-            <blockquote className="text-xl md:text-2xl text-gray-900 font-medium mb-6">
+            <blockquote className="text-xl md:text-2xl text-gray-900 dark:text-gray-100 font-medium mb-6">
               "L'IA de SMART TRIP a trouvé un vol Paris-Tokyo à 450€ alors que
               tous les autres sites affichaient 800€+. Les prédictions de prix
               m'ont dit d'attendre 3 jours et j'ai économisé 350€
@@ -132,8 +132,8 @@ export default function FeaturesSection() {
                 className="w-12 h-12 rounded-full"
               />
               <div className="text-left">
-                <p className="font-semibold text-gray-900">Marie D.</p>
-                <p className="text-gray-600 text-sm">
+                <p className="font-semibold text-gray-900 dark:text-gray-100">Marie D.</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
                   Cliente depuis 2024 • Vol Paris ✈️ Tokyo
                 </p>
               </div>
