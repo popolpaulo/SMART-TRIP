@@ -466,38 +466,45 @@ export default function FlightSearchForm() {
                   />
                   <Plane className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                   {searchData.origin && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchData((prev) => ({ ...prev, origin: "" }));
-                    setShowOriginSuggestions(false);
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchData((prev) => ({ ...prev, origin: "" }));
+                        setShowOriginSuggestions(false);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
 
-            {/* Suggestions d'origine */}
-            {showOriginSuggestions && originSuggestions.length > 0 && (
-              <div
-                ref={originDropdownRef}
-                className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-y-auto"
-              >
-                {originSuggestions.map((airport, index) => (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchData((prev) => ({ ...prev, origin: "" }));
-                      setShowOriginSuggestions(false);
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                {/* Suggestions d'origine */}
+                {showOriginSuggestions && originSuggestions.length > 0 && (
+                  <div
+                    ref={originDropdownRef}
+                    className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-y-auto"
                   >
-                    <X className="h-4 w-4" />
-                  </button>
+                    {originSuggestions.map((airport, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => selectOrigin(airport)}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors flex items-center gap-3"
+                      >
+                        <Plane className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">
+                            {airport.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {airport.iata_code} · {airport.city}, {airport.country}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 )}
-              </div>
 
               {/* Suggestions d'origine */}
               {showOriginSuggestions && originSuggestions.length > 0 && (
