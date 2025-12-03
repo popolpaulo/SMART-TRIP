@@ -390,70 +390,102 @@ export default function FlightSearchForm() {
   return (
     <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-5xl mx-auto">
       {/* Type de voyage */}
-      <div className="flex flex-wrap gap-4 mb-6">
+      <div className="flex flex-wrap gap-4 mb-6 justify-between items-center">
+        <div className="flex flex-wrap gap-4">
+          <button
+            onClick={() => setTripType("roundtrip")}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              tripType === "roundtrip"
+                ? "bg-primary-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            Aller-retour
+          </button>
+          <button
+            onClick={() => setTripType("oneway")}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              tripType === "oneway"
+                ? "bg-primary-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            Aller simple
+          </button>
+          <button
+            onClick={() => setTripType("multicity")}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              tripType === "multicity"
+                ? "bg-primary-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            Multi-destinations
+          </button>
+        </div>
+
+        {/* Bouton swap - version compacte en haut à droite */}
         <button
-          onClick={() => setTripType("roundtrip")}
-          className={`px-4 py-2 rounded-lg font-medium transition ${
-            tripType === "roundtrip"
-              ? "bg-primary-600 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
+          type="button"
+          onClick={swapLocations}
+          className="bg-white border-2 border-primary-600 rounded-full p-2 text-primary-600 hover:bg-primary-600 hover:text-white transition-all duration-200 shadow-md hover:shadow-lg"
+          title="Inverser départ/arrivée"
         >
-          Aller-retour
-        </button>
-        <button
-          onClick={() => setTripType("oneway")}
-          className={`px-4 py-2 rounded-lg font-medium transition ${
-            tripType === "oneway"
-              ? "bg-primary-600 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          Aller simple
-        </button>
-        <button
-          onClick={() => setTripType("multicity")}
-          className={`px-4 py-2 rounded-lg font-medium transition ${
-            tripType === "multicity"
-              ? "bg-primary-600 text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          Multi-destinations
+          <ArrowRightLeft className="h-4 w-4" />
         </button>
       </div>
 
       <form onSubmit={handleSubmit}>
         {/* Origine et Destination avec bouton swap centré - Masqué pour multi-city */}
         {tripType !== "multicity" && (
-        <div className="relative mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-0 md:gap-4 items-end">
-            {/* Origine */}
-            <div className="space-y-2 mb-4 md:mb-0">
-              <label className="block text-sm font-medium text-gray-700">
-                <MapPin className="inline h-4 w-4 mr-1" />
-                Ville de départ
-              </label>
-              <div className="relative">
-                <input
-                  ref={originInputRef}
-                  type="text"
-                  placeholder="Paris (CDG)"
-                  value={searchData.origin}
-                  onChange={(e) => handleOriginChange(e.target.value)}
-                  onFocus={() =>
-                    searchData.origin.length >= 2 &&
-                    setShowOriginSuggestions(true)
-                  }
-                  className="input pl-10 text-gray-900"
-                  required
-                  autoComplete="off"
-                  onBlur={() =>
-                    setTimeout(() => setShowOriginSuggestions(false), 150)
-                  }
-                />
-                <Plane className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                {searchData.origin && (
+          <div className="relative mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-0 md:gap-4 items-end">
+              {/* Origine */}
+              <div className="space-y-2 mb-4 md:mb-0">
+                <label className="block text-sm font-medium text-gray-700">
+                  <MapPin className="inline h-4 w-4 mr-1" />
+                  Ville de départ
+                </label>
+                <div className="relative">
+                  <input
+                    ref={originInputRef}
+                    type="text"
+                    placeholder="Paris (CDG)"
+                    value={searchData.origin}
+                    onChange={(e) => handleOriginChange(e.target.value)}
+                    onFocus={() =>
+                      searchData.origin.length >= 2 &&
+                      setShowOriginSuggestions(true)
+                    }
+                    className="input pl-10 text-gray-900"
+                    required
+                    autoComplete="off"
+                    onBlur={() =>
+                      setTimeout(() => setShowOriginSuggestions(false), 150)
+                    }
+                  />
+                  <Plane className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  {searchData.origin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchData((prev) => ({ ...prev, origin: "" }));
+                    setShowOriginSuggestions(false);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Suggestions d'origine */}
+            {showOriginSuggestions && originSuggestions.length > 0 && (
+              <div
+                ref={originDropdownRef}
+                className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-y-auto"
+              >
+                {originSuggestions.map((airport, index) => (
                   <button
                     type="button"
                     onClick={() => {
