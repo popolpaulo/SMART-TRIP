@@ -392,13 +392,13 @@ export default function SearchResultsPage() {
   if (isMultiCity) {
     if (multiCityLoading) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mb-4"></div>
-            <p className="text-xl font-semibold text-gray-700">
+            <p className="text-xl font-semibold text-gray-700 dark:text-gray-200">
               🧠 Recherche des meilleurs vols pour vos {multiCitySegments.length} destinations...
             </p>
-            <p className="text-gray-500 mt-2">
+            <p className="text-gray-500 dark:text-gray-400 mt-2">
               Analyse en cours sur 500+ compagnies
             </p>
           </div>
@@ -455,14 +455,14 @@ export default function SearchResultsPage() {
     const comboBadges = getMultiCityBadges(displayCombinations);
 
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
         <div className="container mx-auto px-4 max-w-7xl">
           {/* En-tête */}
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               ✈️ Résultats Multi-Destinations
             </h2>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-300">
               {combinations.length} combinaisons trouvées • {passengers} passager{passengers > 1 ? 's' : ''} • Classe {cabinClass}
             </p>
           </div>
@@ -470,8 +470,8 @@ export default function SearchResultsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Filtres */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-lg p-6 sticky top-4">
-                <h3 className="font-semibold text-lg mb-4">Filtres</h3>
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sticky top-4">
+                <h3 className="font-semibold text-lg mb-4 dark:text-white">Filtres</h3>
 
                 {/* Tri */}
                 <div className="mb-6">
@@ -546,7 +546,7 @@ export default function SearchResultsPage() {
             <div className="lg:col-span-3">
               {displayCombinations.length > 0 ? (
                 <div className="space-y-4">
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-300">
                     Affichage de {displayCombinations.length} résultat{displayCombinations.length > 1 ? 's' : ''}
                   </p>
 
@@ -554,7 +554,7 @@ export default function SearchResultsPage() {
                     const badge = comboBadges[combo.id];
                     
                     return (
-                      <div key={combo.id} className="bg-white rounded-xl shadow-lg p-6">
+                      <div key={combo.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
                         {/* Badge */}
                         {badge && (
                           <div className="mb-3">
@@ -573,14 +573,14 @@ export default function SearchResultsPage() {
                         {/* Prix total */}
                         <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
                           <div>
-                            <span className="text-sm text-gray-600">Prix total du voyage</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Prix total du voyage</span>
                             <div className="text-3xl font-bold text-primary-600">
                               {combo.totalPrice.toFixed(0)}€
                             </div>
                           </div>
                           <div className="text-right">
-                            <span className="text-sm text-gray-600">Durée totale</span>
-                            <div className="text-xl font-semibold text-gray-900">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Durée totale</span>
+                            <div className="text-xl font-semibold text-gray-900 dark:text-white">
                               {Math.floor(combo.totalDuration / 60)}h {combo.totalDuration % 60}m
                             </div>
                           </div>
@@ -601,15 +601,15 @@ export default function SearchResultsPage() {
                               <div className="flex items-center justify-between mb-2">
                                 <div>
                                   <span className="text-xs font-semibold text-primary-600">Vol {segIdx + 1}</span>
-                                  <h4 className="text-lg font-semibold text-gray-900">
+                                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
                                     {segment?.origin} → {segment?.destination}
                                   </h4>
                                 </div>
                                 <div className="text-right">
-                                  <span className="text-lg font-bold text-gray-900">{price.toFixed(0)}€</span>
+                                  <span className="text-lg font-bold text-gray-900 dark:text-white">{price.toFixed(0)}€</span>
                                 </div>
                               </div>
-                              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                              <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                                 {airlineInfo.logo && (
                                   <img 
                                     src={airlineInfo.logo} 
@@ -650,14 +650,14 @@ export default function SearchResultsPage() {
                   })}
 
                   {filteredCombinations.length > displayCombinations.length && (
-                    <p className="text-center text-gray-500">
+                    <p className="text-center text-gray-500 dark:text-gray-400">
                       + {filteredCombinations.length - displayCombinations.length} autres combinaisons disponibles
                     </p>
                   )}
                 </div>
               ) : (
-                <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-                  <p className="text-gray-600">Aucune combinaison ne correspond à vos critères de filtrage.</p>
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
+                  <p className="text-gray-600 dark:text-gray-300">Aucune combinaison ne correspond à vos critères de filtrage.</p>
                   <button
                     onClick={() => {
                       setMultiCityStopsFilters({});
@@ -685,13 +685,13 @@ export default function SearchResultsPage() {
 
 if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mb-4"></div>
-          <p className="text-xl font-semibold text-gray-700">
+          <p className="text-xl font-semibold text-gray-700 dark:text-gray-200">
             🧠 L'IA analyse les meilleurs vols pour vous...
           </p>
-          <p className="text-gray-500 mt-2">
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
             Comparaison en cours sur 500+ compagnies
           </p>
         </div>
@@ -701,13 +701,13 @@ if (loading) {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 max-w-md">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-center mb-2">
+          <h2 className="text-2xl font-bold text-center mb-2 dark:text-white">
             Erreur de recherche
           </h2>
-          <p className="text-gray-600 text-center">{error}</p>
+          <p className="text-gray-600 dark:text-gray-300 text-center">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="btn btn-primary w-full mt-4"
@@ -723,7 +723,7 @@ if (loading) {
   const displayFlights = sortedFlights;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* En-tête de recherche avec IA */}
         <div className="bg-gradient-to-r from-primary-600 to-purple-600 rounded-xl shadow-lg p-6 mb-8 text-white">
@@ -739,7 +739,7 @@ if (loading) {
             <div className="opacity-90">
               {passengers || 1} passager{passengers > 1 ? "s" : ""}
             </div>
-            <button className="ml-auto btn bg-white text-primary-600 hover:bg-gray-100">
+            <button className="ml-auto btn bg-white dark:bg-gray-700 text-primary-600 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">
               Modifier la recherche
             </button>
           </div>
@@ -757,16 +757,16 @@ if (loading) {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Filtres */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-md p-6 sticky top-24 space-y-6">
-              <h3 className="text-lg font-semibold">Filtres</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 sticky top-24 space-y-6">
+              <h3 className="text-lg font-semibold dark:text-white">Filtres</h3>
 
               {/* Tri */}
               <div>
-                <label className="label mb-2 block text-sm font-medium text-gray-700">Trier par</label>
+                <label className="label mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Trier par</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-sm cursor-pointer hover:border-gray-400 transition"
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 dark:text-white text-sm cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition"
                 >
                   <option value="best">🏆  Meilleur rapport qualité/prix</option>
                   <option value="price">💰  Prix le plus bas</option>
@@ -783,7 +783,7 @@ if (loading) {
                     return (
                       <label
                         key={code}
-                        className="flex items-center space-x-2 hover:bg-gray-50 p-1 rounded"
+                        className="flex items-center space-x-2 hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded"
                       >
                         <input
                           type="checkbox"
@@ -816,12 +816,12 @@ if (loading) {
 
               {/* Prix */}
               <div>
-                <label className="label">
+                <label className="label dark:text-gray-300">
                   Fourchette de prix: {minBudget}€ - {maxBudget}€
                 </label>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs text-gray-600">Minimum</label>
+                    <label className="text-xs text-gray-600 dark:text-gray-400">Minimum</label>
                     <input
                       type="range"
                       min="0"
@@ -833,7 +833,7 @@ if (loading) {
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-600">Maximum</label>
+                    <label className="text-xs text-gray-600 dark:text-gray-400">Maximum</label>
                     <input
                       type="range"
                       min="0"
@@ -1115,7 +1115,7 @@ if (loading) {
               return (
                 <div
                   key={flight.id}
-                  className="bg-white rounded-xl shadow-md hover:shadow-xl transition overflow-hidden"
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition overflow-hidden"
                 >
                   {/* Badge pratique */}
                   {flightBadge && (
@@ -1150,14 +1150,14 @@ if (loading) {
                                 }}
                               />
                             ) : null}
-                            <div className="w-12 h-12 bg-gray-100 rounded-lg items-center justify-center text-2xl" style={{display: airlineInfo?.logo ? 'none' : 'flex'}}>
+                            <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg items-center justify-center text-2xl" style={{display: airlineInfo?.logo ? 'none' : 'flex'}}>
                               ✈️
                             </div>
                             <div>
-                              <div className="font-semibold text-lg">
+                              <div className="font-semibold text-lg dark:text-white">
                                 {airlineInfo?.name || carrierCode}
                               </div>
-                              <div className="text-sm text-gray-500">
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
                                 {airlineInfo?.code || carrierCode} •{" "}
                                 <span className="capitalize">
                                   {flight.class || cabinClass}
@@ -1171,7 +1171,7 @@ if (loading) {
 
                         <div className="flex items-center justify-between mb-4">
                           <div className="text-center">
-                            <div className="text-2xl font-bold">
+                            <div className="text-2xl font-bold dark:text-white">
                               {flight.outbound?.departure?.time
                                 ? new Date(
                                     flight.outbound.departure.time
@@ -1181,7 +1181,7 @@ if (loading) {
                                   })
                                 : flight.departure}
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
                               {flight.outbound?.departure?.airport ||
                                 origin ||
                                 "PAR"}
@@ -1189,10 +1189,10 @@ if (loading) {
                           </div>
 
                           <div className="flex-1 px-6">
-                            <div className="flex items-center justify-center space-x-2 text-gray-600">
-                              <div className="h-px bg-gray-300 flex-1"></div>
+                            <div className="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400">
+                              <div className="h-px bg-gray-300 dark:bg-gray-600 flex-1"></div>
                               <Plane className="h-5 w-5" />
-                              <div className="h-px bg-gray-300 flex-1"></div>
+                              <div className="h-px bg-gray-300 dark:bg-gray-600 flex-1"></div>
                             </div>
                             <div className="text-center mt-2">
                               <div className="text-sm font-medium">
@@ -1223,7 +1223,7 @@ if (loading) {
                                   })
                                 : flight.arrival}
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
                               {flight.outbound?.arrival?.airport ||
                                 destination ||
                                 "NYC"}
@@ -1233,7 +1233,7 @@ if (loading) {
 
                         {/* Vol retour si round trip */}
                         {returnDate && flight.inbound && (
-                          <div className="mt-6 pt-6 border-t border-gray-200">
+                          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
                             <div className="flex items-center mb-3">
                               <div className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold">
                                 ← Vol retour
@@ -1249,16 +1249,16 @@ if (loading) {
                                       })
                                     : "—"}
                                 </div>
-                                <div className="text-sm text-gray-600">
+                                <div className="text-sm text-gray-600 dark:text-gray-400">
                                   {flight.inbound?.departure?.airport || destinationCode}
                                 </div>
                               </div>
 
                               <div className="flex-1 px-6">
-                                <div className="flex items-center justify-center space-x-2 text-gray-600">
-                                  <div className="h-px bg-gray-300 flex-1"></div>
+                                <div className="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400">
+                                  <div className="h-px bg-gray-300 dark:bg-gray-600 flex-1"></div>
                                   <Plane className="h-5 w-5 transform rotate-180" />
-                                  <div className="h-px bg-gray-300 flex-1"></div>
+                                  <div className="h-px bg-gray-300 dark:bg-gray-600 flex-1"></div>
                                 </div>
                                 <div className="text-center mt-2">
                                   <div className="text-sm font-medium">
