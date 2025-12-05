@@ -16,6 +16,7 @@ const tripRoutes = require("./src/routes/trip.routes");
 const searchRoutes = require("./src/routes/search.routes");
 const alertRoutes = require("./src/routes/alert.routes");
 const favoriteRoutes = require("./src/routes/favorite.routes");
+const inspirationRoutes = require("./src/routes/inspiration.routes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -85,6 +86,7 @@ app.use("/api/trips", tripRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use("/api/inspiration", inspirationRoutes);
 
 // Route par défaut
 app.get("/", (req, res) => {

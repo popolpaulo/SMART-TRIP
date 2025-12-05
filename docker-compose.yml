@@ -48,6 +48,7 @@ services:
       DB_PORT: 5432 # Port interne PostgreSQL
       PORT: 3000
       NODE_ENV: production
+      OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy

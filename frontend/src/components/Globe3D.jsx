@@ -1,30 +1,19 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useFrame, useLoader, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import { TextureLoader, Raycaster, Vector2 } from 'three';
 import * as THREE from 'three';
+import { DESTINATIONS } from '../utils/destinations';
 
-// Coordonnées approximatives des principales destinations
-const DESTINATIONS = [
-  { name: 'France', lat: 46.2276, lon: 2.2137, city: 'Paris' },
-  { name: 'États-Unis', lat: 37.0902, lon: -95.7129, city: 'New York' },
-  { name: 'Japon', lat: 36.2048, lon: 138.2529, city: 'Tokyo' },
-  { name: 'Royaume-Uni', lat: 55.3781, lon: -3.4360, city: 'London' },
-  { name: 'Italie', lat: 41.8719, lon: 12.5674, city: 'Rome' },
-  { name: 'Espagne', lat: 40.4637, lon: -3.7492, city: 'Madrid' },
-  { name: 'Allemagne', lat: 51.1657, lon: 10.4515, city: 'Berlin' },
-  { name: 'Brésil', lat: -14.2350, lon: -51.9253, city: 'Rio' },
-  { name: 'Australie', lat: -25.2744, lon: 133.7751, city: 'Sydney' },
-  { name: 'Chine', lat: 35.8617, lon: 104.1954, city: 'Beijing' },
-];
-
-const Globe3D = ({ onCountryClick }) => {
+const Globe3D = ({ onCountryClick, inspirationMode = false, zoomToDestination = null, onZoomComplete }) => {
   const globeGroupRef = useRef(); // Groupe qui contient le globe ET les marqueurs
   const meshRef = useRef();
   const cloudsRef = useRef();
   const markersRef = useRef([]);
   const { camera, gl } = useThree();
   const [hoveredMarker, setHoveredMarker] = useState(null);
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomAnimation, setZoomAnimation] = useState(null);
 
   // Charger la texture de la Terre
   const earthTexture = useLoader(TextureLoader, 'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg');
@@ -76,10 +65,90 @@ const Globe3D = ({ onCountryClick }) => {
     }
   };
 
-  // Animation de rotation automatique - rotation du groupe entier
+  // Démarrer l'animation de zoom quand une destination est sélectionnée
+  React.useEffect(() => {
+    if (zoomToDestination && !isZooming && globeGroupRef.current) {
+      const destination = DESTINATIONS.find(d => 
+        d.city.toLowerCase() === zoomToDestination.toLowerCase()
+      );
+      
+      if (destination) {
+        setIsZooming(true);
+        
+        // Trouver le marqueur correspondant à cette destination
+        const markerIndex = DESTINATIONS.findIndex(d => 
+          d.city.toLowerCase() === zoomToDestination.toLowerCase()
+        );
+        
+        const targetMarker = markersRef.current[markerIndex];
+        
+        if (targetMarker) {
+          // Position initiale de la caméra
+          const startCameraPos = camera.position.clone();
+          
+          // Obtenir la position mondiale du marqueur (en tenant compte de la rotation du globe)
+          const markerWorldPos = new THREE.Vector3();
+          targetMarker.getWorldPosition(markerWorldPos);
+          
+          // Calculer la direction depuis le centre du globe vers le marqueur
+          const direction = markerWorldPos.clone().normalize();
+          
+          // Position cible de la caméra : en face du marqueur à distance de zoom
+          const zoomDistance = 4.5;
+          const targetCameraPos = direction.clone().multiplyScalar(zoomDistance);
+          
+          console.log('Zoom vers:', destination.city);
+          console.log('Position du marqueur:', markerWorldPos);
+          console.log('Position cible caméra:', targetCameraPos);
+          
+          setZoomAnimation({
+            startTime: Date.now(),
+            duration: 2500,
+            startCameraPos,
+            targetCameraPos,
+            startGlobeRotation: null, // Pas de rotation du globe, on bouge juste la caméra
+            targetGlobeRotation: null
+          });
+        }
+      }
+    }
+  }, [zoomToDestination, isZooming, camera]);
+
+  // Animation de rotation automatique et zoom
   useFrame((state, delta) => {
-    if (globeGroupRef.current) {
+    // Mode inspiration : rotation plus rapide
+    if (inspirationMode && globeGroupRef.current && !isZooming) {
+      globeGroupRef.current.rotation.y += delta * 0.3;
+    } else if (globeGroupRef.current && !isZooming) {
+      // Rotation normale
       globeGroupRef.current.rotation.y += delta * 0.15;
+    }
+
+    // Animation de zoom en cours
+    if (zoomAnimation && globeGroupRef.current) {
+      const elapsed = Date.now() - zoomAnimation.startTime;
+      const progress = Math.min(elapsed / zoomAnimation.duration, 1);
+      
+      // Easing function (ease-in-out)
+      const eased = progress < 0.5 
+        ? 2 * progress * progress 
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+      
+      // Animer le zoom de la caméra vers le marqueur
+      camera.position.lerpVectors(
+        zoomAnimation.startCameraPos, 
+        zoomAnimation.targetCameraPos, 
+        eased
+      );
+      camera.lookAt(0, 0, 0);
+      
+      // Fin de l'animation
+      if (progress >= 1) {
+        setZoomAnimation(null);
+        if (onZoomComplete) {
+          setTimeout(() => onZoomComplete(), 500);
+        }
+      }
     }
   });
 
@@ -96,14 +165,14 @@ const Globe3D = ({ onCountryClick }) => {
         speed={2}
       />
 
-      {/* Lumière ambiante */}
-      <ambientLight intensity={0.6} />
+      {/* Lumière ambiante augmentée pour éclaircir le globe */}
+      <ambientLight intensity={0.9} />
       
-      {/* Lumière directionnelle (soleil) */}
-      <directionalLight position={[5, 3, 5]} intensity={2} />
+      {/* Lumière directionnelle (soleil) plus intense */}
+      <directionalLight position={[5, 3, 5]} intensity={2.5} />
       
       {/* Point de lumière supplémentaire */}
-      <pointLight position={[-10, 0, -10]} intensity={0.8} color="#4080ff" />
+      <pointLight position={[-10, 0, -10]} intensity={1.2} color="#4080ff" />
 
       {/* Groupe contenant le globe et les marqueurs - tourne ensemble */}
       <group ref={globeGroupRef}>
@@ -117,7 +186,7 @@ const Globe3D = ({ onCountryClick }) => {
           />
         </mesh>
 
-        {/* Marqueurs pour les destinations principales - attachés au globe */}
+        {/* Marqueurs invisibles pour les destinations - servent de repères pour le zoom */}
         {DESTINATIONS.map((dest, index) => {
           const position = latLonToVector3(dest.lat, dest.lon);
           return (
@@ -125,15 +194,13 @@ const Globe3D = ({ onCountryClick }) => {
               key={index}
               position={position}
               ref={(el) => (markersRef.current[index] = el)}
-              userData={{ name: dest.name, city: dest.city }}
-              onPointerMove={handlePointerMove}
-              onClick={handleClick}
+              userData={{ country: dest.country, city: dest.city }}
             >
-              <sphereGeometry args={[0.05, 16, 16]} />
+              <sphereGeometry args={[0.01, 8, 8]} />
               <meshBasicMaterial 
-                color={hoveredMarker === dest.name ? '#ff6b6b' : '#ffd93d'} 
-                opacity={0.9}
                 transparent
+                opacity={0}
+                visible={false}
               />
             </mesh>
           );
@@ -153,9 +220,9 @@ const Globe3D = ({ onCountryClick }) => {
 
       {/* Contrôles de caméra - INTERACTIFS */}
       <OrbitControls
-        enableZoom={true}
-        enablePan={true}
-        enableRotate={true}
+        enableZoom={!isZooming}
+        enablePan={!isZooming}
+        enableRotate={!isZooming}
         minDistance={4}
         maxDistance={20}
         autoRotate={false}
