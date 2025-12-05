@@ -472,24 +472,22 @@ export default function SearchResultsPage() {
             <div className="lg:col-span-1">
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sticky top-4">
                 <h3 className="font-semibold text-lg mb-4 dark:text-white">Filtres</h3>
-
                 {/* Tri */}
                 <div className="mb-6">
-                  <label className="label">Trier par</label>
+                  <label className="label mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Trier par</label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="input"
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 dark:text-white text-sm cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition"
                   >
                     <option value="best">🏆 Meilleur rapport</option>
                     <option value="price">💰 Prix le plus bas</option>
                     <option value="duration">⚡ Plus rapide</option>
                   </select>
                 </div>
-
                 {/* Prix */}
                 <div className="mb-6">
-                  <label className="label">
+                  <label className="label mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Prix total: {minBudget}€ - {maxBudget}€
                   </label>
                   <div className="space-y-3">
@@ -500,45 +498,47 @@ export default function SearchResultsPage() {
                       step="100"
                       value={maxBudget}
                       onChange={(e) => setMaxBudget(Number(e.target.value))}
-                      className="w-full"
+                      className="w-full accent-primary-600 dark:accent-primary-400"
                     />
                   </div>
                 </div>
-
                 {/* Escales par segment */}
-                {multiCitySegments.map((segment, idx) => (
-                  <div key={idx} className="mb-4">
-                    <label className="label">Vol {idx + 1}: {segment.origin}→{segment.destination}</label>
-                    <div className="space-y-2">
-                      {[0, 1, 2].map(stops => (
-                        <label key={stops} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            className="rounded"
-                            checked={(multiCityStopsFilters[idx] || []).includes(stops)}
-                            onChange={(e) => {
-                              const current = multiCityStopsFilters[idx] || [];
-                              if (e.target.checked) {
-                                setMultiCityStopsFilters({
-                                  ...multiCityStopsFilters,
-                                  [idx]: [...current, stops]
-                                });
-                              } else {
-                                setMultiCityStopsFilters({
-                                  ...multiCityStopsFilters,
-                                  [idx]: current.filter(s => s !== stops)
-                                });
-                              }
-                            }}
-                          />
-                          <span className="text-sm">
-                            {stops === 0 ? 'Direct' : stops === 1 ? '1 escale' : '2+ escales'}
-                          </span>
-                        </label>
-                      ))}
+                <div className="mb-6">
+                  <label className="label mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Escales par segment</label>
+                  {multiCitySegments.map((segment, idx) => (
+                    <div key={idx} className="mb-4">
+                      <label className="label">Vol {idx + 1}: {segment.origin}→{segment.destination}</label>
+                      <div className="space-y-2">
+                        {[0, 1, 2].map(stops => (
+                          <label key={stops} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              className="rounded accent-primary-600 dark:accent-primary-400 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600"
+                              checked={(multiCityStopsFilters[idx] || []).includes(stops)}
+                              onChange={(e) => {
+                                const current = multiCityStopsFilters[idx] || [];
+                                if (e.target.checked) {
+                                  setMultiCityStopsFilters({
+                                    ...multiCityStopsFilters,
+                                    [idx]: [...current, stops]
+                                  });
+                                } else {
+                                  setMultiCityStopsFilters({
+                                    ...multiCityStopsFilters,
+                                    [idx]: current.filter(s => s !== stops)
+                                  });
+                                }
+                              }}
+                            />
+                            <span className="text-sm dark:text-gray-200">
+                              {stops === 0 ? 'Direct' : stops === 1 ? '1 escale' : '2+ escales'}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -559,9 +559,9 @@ export default function SearchResultsPage() {
                         {badge && (
                           <div className="mb-3">
                             <span className={`inline-block px-4 py-2 rounded-lg text-sm font-bold ${
-                              badge === 'MEILLEUR' ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300' :
-                              badge === 'MOINS CHER' ? 'bg-green-100 text-green-800 border-2 border-green-300' :
-                              'bg-blue-100 text-blue-800 border-2 border-blue-300'
+                              badge === 'MEILLEUR' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border-2 border-yellow-300 dark:border-yellow-700' :
+                              badge === 'MOINS CHER' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-2 border-green-300 dark:border-green-700' :
+                              'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-2 border-blue-300 dark:border-blue-700'
                             }`}>
                               {badge === 'MEILLEUR' ? '🏆 MEILLEUR' :
                                badge === 'MOINS CHER' ? '💰 MOINS CHER' :
@@ -571,10 +571,10 @@ export default function SearchResultsPage() {
                         )}
 
                         {/* Prix total */}
-                        <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
+                        <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
                           <div>
                             <span className="text-sm text-gray-600 dark:text-gray-400">Prix total du voyage</span>
-                            <div className="text-3xl font-bold text-primary-600">
+                            <div className="text-3xl font-bold text-primary-600 dark:text-primary-400">
                               {combo.totalPrice.toFixed(0)}€
                             </div>
                           </div>
@@ -600,7 +600,7 @@ export default function SearchResultsPage() {
                             <div key={segIdx} className="border-l-4 border-primary-500 pl-4">
                               <div className="flex items-center justify-between mb-2">
                                 <div>
-                                  <span className="text-xs font-semibold text-primary-600">Vol {segIdx + 1}</span>
+                                  <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">Vol {segIdx + 1}</span>
                                   <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
                                     {segment?.origin} → {segment?.destination}
                                   </h4>
