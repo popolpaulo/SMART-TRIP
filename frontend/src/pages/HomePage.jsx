@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Sparkles, TrendingUp, Brain, Zap, Target } from "lucide-react";
 import api from "../utils/api";
 import FlightSearchForm from "../components/FlightSearchForm";
@@ -6,6 +7,8 @@ import TrendingDestinations from "../components/TrendingDestinations";
 import FeaturesSection from "../components/FeaturesSection";
 
 export default function HomePage() {
+  const location = useLocation();
+  const selectedDestination = location.state?.destination || null;
   const [trendingDestinations, setTrendingDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -72,7 +75,7 @@ export default function HomePage() {
           </div>
 
           {/* Formulaire de recherche */}
-          <FlightSearchForm />
+          <FlightSearchForm initialDestination={selectedDestination} />
 
           {/* Stats rapides */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12 pt-12 border-t border-white/20">

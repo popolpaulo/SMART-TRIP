@@ -4,6 +4,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
+import LandingPage from "./pages/LandingPage";
 import HomePage from "./pages/HomePage";
 import SearchResultsPage from "./pages/SearchResultsPage";
 import LoginPage from "./pages/LoginPage";
@@ -19,25 +20,29 @@ function App() {
       <Router>
         <ThemeProvider>
           <AuthProvider>
-            <Layout>
             <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/search" element={<SearchResultsPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
+              {/* Landing Page sans Layout */}
+              <Route path="/" element={<LandingPage />} />
+              
+              {/* Pages avec Layout */}
+              <Route path="/home" element={<Layout><HomePage /></Layout>} />
+              <Route path="/search" element={<Layout><SearchResultsPage /></Layout>} />
+              <Route path="/login" element={<Layout><LoginPage /></Layout>} />
+              <Route path="/register" element={<Layout><RegisterPage /></Layout>} />
               <Route
                 path="/profile"
                 element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
+                  <Layout>
+                    <ProtectedRoute>
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  </Layout>
                 }
               />
-              <Route path="/verify-email" element={<VerifyEmailPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/verify-email" element={<Layout><VerifyEmailPage /></Layout>} />
+              <Route path="/forgot-password" element={<Layout><ForgotPasswordPage /></Layout>} />
+              <Route path="/reset-password" element={<Layout><ResetPasswordPage /></Layout>} />
             </Routes>
-          </Layout>
         </AuthProvider>
       </ThemeProvider>
     </Router>

@@ -156,7 +156,7 @@ const POPULAR_AIRPORTS = [
   },
 ];
 
-export default function FlightSearchForm() {
+export default function FlightSearchForm({ initialDestination = null }) {
   const navigate = useNavigate();
   const [tripType, setTripType] = useState("roundtrip"); // 'roundtrip', 'oneway', 'multicity'
   const [searchData, setSearchData] = useState({
@@ -191,6 +191,33 @@ export default function FlightSearchForm() {
   const destinationInputRef = useRef(null);
   const originDropdownRef = useRef(null);
   const destinationDropdownRef = useRef(null);
+
+  // Initialiser la destination si fournie depuis le globe
+  useEffect(() => {
+    if (initialDestination) {
+      // Chercher l'aéroport correspondant à la ville
+      const airport = POPULAR_AIRPORTS.find(
+        (a) => a.city.toLowerCase() === initialDestination.toLowerCase()
+      );
+      if (airport) {
+        setSearchData((prev) => ({
+          ...prev,
+          destination: `${airport.city} (${airport.code})`,
+        }));
+      } else {
+        // Si pas trouvé exactement, chercher une correspondance partielle
+        const partialMatch = POPULAR_AIRPORTS.find((a) =>
+          a.city.toLowerCase().includes(initialDestination.toLowerCase())
+        );
+        if (partialMatch) {
+          setSearchData((prev) => ({
+            ...prev,
+            destination: `${partialMatch.city} (${partialMatch.code})`,
+          }));
+        }
+      }
+    }
+  }, [initialDestination]);
 
   // Fermer les suggestions en cliquant à l'extérieur
   useEffect(() => {
