@@ -40,12 +40,6 @@ export default function Layout({ children }) {
               {isAuthenticated && (
                 <>
                   <Link
-                    to="/trips"
-                    className="text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition"
-                  >
-                    Mes voyages
-                  </Link>
-                  <Link
                     to="/alerts"
                     className="text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition"
                   >
@@ -86,6 +80,21 @@ export default function Layout({ children }) {
                         >
                           <User className="h-4 w-4 inline mr-2" />
                           Mon profil
+                        </Link>
+                        <Link
+                          to="/favorites"
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <Heart className="h-4 w-4 inline mr-2" />
+                          Mes favoris
+                        </Link>
+                        <Link
+                          to="/history"
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          Historique
                         </Link>
                         <button
                           onClick={() => {

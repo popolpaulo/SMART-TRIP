@@ -10,6 +10,8 @@ import SearchResultsPage from "./pages/SearchResultsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
+import FavoritesPage from "./pages/FavoritesPage";
+import SearchHistoryPage from "./pages/SearchHistoryPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
@@ -35,6 +37,26 @@ function App() {
                   <Layout>
                     <ProtectedRoute>
                       <ProfilePage />
+                    </ProtectedRoute>
+                  </Layout>
+                }
+              />
+              <Route
+                path="/favorites"
+                element={
+                  <Layout>
+                    <ProtectedRoute>
+                      <FavoritesPage />
+                    </ProtectedRoute>
+                  </Layout>
+                }
+              />
+              <Route
+                path="/history"
+                element={
+                  <Layout>
+                    <ProtectedRoute>
+                      <SearchHistoryPage />
                     </ProtectedRoute>
                   </Layout>
                 }

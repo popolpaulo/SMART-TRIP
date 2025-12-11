@@ -15,6 +15,7 @@ const flightRoutes = require("./src/routes/flight.routes");
 const hotelRoutes = require("./src/routes/hotel.routes");
 const tripRoutes = require("./src/routes/trip.routes");
 const searchRoutes = require("./src/routes/search.routes");
+const searchHistoryRoutes = require("./src/routes/search-history.routes");
 const alertRoutes = require("./src/routes/alert.routes");
 const favoriteRoutes = require("./src/routes/favorite.routes");
 const inspirationRoutes = require("./src/routes/inspiration.routes");
@@ -85,6 +86,7 @@ app.use("/api/flights", flightRoutes);
 app.use("/api/hotels", hotelRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api/search", searchRoutes);
+app.use("/api/search", searchHistoryRoutes); // Routes d'historique de recherche
 app.use("/api/alerts", alertRoutes);
 app.use("/api/favorites", favoriteRoutes);
 app.use("/api/inspiration", inspirationRoutes);

@@ -1,5 +1,5 @@
 const db = require("../database/connection");
-const { logger } = require("../utils/logger");
+const logger = require("../utils/logger");
 
 /**
  * Ajouter un vol aux favoris

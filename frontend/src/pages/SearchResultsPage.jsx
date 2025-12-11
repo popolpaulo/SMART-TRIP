@@ -12,6 +12,7 @@ import {
   Award,
   AlertCircle,
   ExternalLink,
+  Heart,
 } from "lucide-react";
 import { searchFlights } from "../utils/api";
 import { getAirlineInfo, generateBookingLink } from "../utils/airlines";
@@ -47,6 +48,9 @@ export default function SearchResultsPage() {
   const passengers = parseInt(searchParams.get("passengers") || "1");
   const cabinClass = searchParams.get("class") || "economy";
   const directFlightsOnly = searchParams.get("directFlightsOnly") === "true";
+  
+  // Map pour stocker: flightKey => favoriteDbId (UUID)
+  const [favoritesMap, setFavoritesMap] = useState(new Map());
 
   // Normalise les entrées pour obtenir des codes IATA (ex: "Paris (CDG)" -> "CDG")
   const extractIata = (val) => {
@@ -155,6 +159,39 @@ export default function SearchResultsPage() {
     }
   }, [origin, destination, departureDate, returnDate, passengers, cabinClass, directFlightsOnly]);
 
+  // Charger les favoris de l'utilisateur
+  useEffect(() => {
+    const loadFavorites = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const response = await fetch("http://localhost:3000/api/favorites", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const newMap = new Map();
+          
+          // Pour chaque favori en DB, créer une clé basée sur les infos du vol
+          data.favorites?.forEach(fav => {
+            const key = `${fav.airline_code}-${fav.flight_number}-${fav.departure_datetime}`;
+            newMap.set(key, fav.id); // Stocker l'UUID de la DB
+          });
+          
+          setFavoritesMap(newMap);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des favoris:", error);
+      }
+    };
+
+    loadFavorites();
+  }, []);
+
   // Helper pour parser la durée ISO (PT8H30M)
   const parseDuration = (duration) => {
     if (!duration) return 0;
@@ -170,6 +207,96 @@ export default function SearchResultsPage() {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     return `${hours}h${minutes > 0 ? ` ${minutes}m` : ""}`;
+  };
+
+  // Gérer les favoris
+  const handleToggleFavorite = async (flight) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Vous devez être connecté pour ajouter des favoris");
+      return;
+    }
+
+    // Créer une clé unique pour ce vol
+    const airlineCode = flight.validatingAirlineCodes?.[0] || flight.outbound?.airline || "XX";
+    const flightNumber = flight.outbound?.flightNumber || "N/A";
+    const departureTime = flight.outbound?.departure?.time || departureDate;
+    const flightKey = `${airlineCode}-${flightNumber}-${departureTime}`;
+    
+    const favoriteDbId = favoritesMap.get(flightKey);
+    const isFavorite = favoriteDbId !== undefined;
+
+    try {
+      if (isFavorite) {
+        // Retirer des favoris
+        const response = await fetch(`http://localhost:3000/api/favorites/${favoriteDbId}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          setFavoritesMap(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(flightKey);
+            return newMap;
+          });
+        } else {
+          const errorData = await response.json();
+          console.error("Erreur backend:", errorData);
+          alert(errorData.error || "Erreur lors de la suppression");
+        }
+      } else {
+        // Ajouter aux favoris
+        const airlineInfo = getAirlineInfo(airlineCode);
+        const durationMinutes = flight.outbound?.duration ? parseDuration(flight.outbound.duration) : 0;
+        
+        const response = await fetch("http://localhost:3000/api/favorites", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            airlineCode: airlineCode,
+            airlineName: airlineInfo?.name || airlineCode,
+            flightNumber: flightNumber,
+            originCode: flight.outbound?.departure?.airport || originCode,
+            originCity: origin || originCode,
+            destinationCode: flight.outbound?.arrival?.airport || destinationCode,
+            destinationCity: destination || destinationCode,
+            departureDatetime: departureTime,
+            arrivalDatetime: flight.outbound?.arrival?.time || departureDate,
+            durationMinutes: durationMinutes,
+            stops: flight.outbound?.stops || 0,
+            cabinClass: cabinClass,
+            priceAmount: flight.price?.total || flight.price,
+            priceCurrency: "EUR",
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const newFavoriteId = data.favorite?.id;
+          
+          if (newFavoriteId) {
+            setFavoritesMap(prev => {
+              const newMap = new Map(prev);
+              newMap.set(flightKey, newFavoriteId);
+              return newMap;
+            });
+          }
+        } else {
+          const errorData = await response.json();
+          console.error("Erreur backend:", errorData);
+          alert(errorData.error || "Erreur lors de l'ajout aux favoris");
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors de la gestion des favoris:", error);
+      alert("Une erreur est survenue");
+    }
   };
 
   // Fonction pour créer des combinaisons de vols multi-city
@@ -1112,11 +1239,32 @@ if (loading) {
               });
               const flightBadge = flightBadges[flight.id];
 
+              // Créer la clé pour vérifier si ce vol est en favoris
+              const flightNumber = flight.outbound?.flightNumber || "N/A";
+              const departureTime = flight.outbound?.departure?.time || departureDate;
+              const flightKey = `${carrierCode}-${flightNumber}-${departureTime}`;
+              const isFavorited = favoritesMap.has(flightKey);
+
               return (
                 <div
                   key={flight.id}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition overflow-hidden"
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition overflow-hidden relative"
                 >
+                  {/* Bouton favori en haut à droite */}
+                  <button
+                    onClick={() => handleToggleFavorite(flight)}
+                    className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white dark:bg-gray-700 shadow-md hover:shadow-lg transition-all"
+                    aria-label={isFavorited ? "Retirer des favoris" : "Ajouter aux favoris"}
+                  >
+                    <Heart
+                      className={`h-6 w-6 ${
+                        isFavorited
+                          ? "fill-red-500 text-red-500"
+                          : "text-gray-400 hover:text-red-500"
+                      }`}
+                    />
+                  </button>
+
                   {/* Badge pratique */}
                   {flightBadge && (
                     <div

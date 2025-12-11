@@ -8,6 +8,8 @@ const logger = require('../utils/logger');
 // Supprimer les comptes non vérifiés après 15 minutes
 async function deleteUnverifiedAccounts() {
   try {
+    logger.debug('Exécution du nettoyage des comptes non vérifiés...');
+    
     const result = await db.query(
       `DELETE FROM users 
        WHERE email_verified = FALSE 
@@ -18,6 +20,8 @@ async function deleteUnverifiedAccounts() {
     if (result.rows.length > 0) {
       logger.info(`🗑️  Suppression de ${result.rows.length} compte(s) non vérifié(s):`);
       result.rows.forEach(row => logger.info(`   - ${row.email}`));
+    } else {
+      logger.debug('Aucun compte à supprimer');
     }
 
     return result.rows.length;
