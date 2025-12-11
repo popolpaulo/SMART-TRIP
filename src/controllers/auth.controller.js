@@ -96,7 +96,7 @@ exports.login = async (req, res) => {
 
     // Trouver l'utilisateur
     const result = await db.query(
-      "SELECT id, email, password_hash, first_name, last_name, is_active FROM users WHERE email = $1",
+      "SELECT id, email, password_hash, first_name, last_name, is_active, email_verified FROM users WHERE email = $1",
       [email]
     );
 
@@ -115,6 +115,40 @@ exports.login = async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
       return res.status(401).json({ error: "Email ou mot de passe incorrect" });
+    }
+
+    // Vérifier si l'email est vérifié
+    if (!user.email_verified) {
+      // Générer un nouveau code de vérification
+      const verificationCode = emailService.generateVerificationCode();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+      // Supprimer les anciens codes pour cet utilisateur
+      await db.query(
+        `DELETE FROM email_verifications WHERE user_id = $1`,
+        [user.id]
+      );
+
+      // Insérer le nouveau code
+      await db.query(
+        `INSERT INTO email_verifications (user_id, email, code, expires_at)
+         VALUES ($1, $2, $3, $4)`,
+        [user.id, email, verificationCode, expiresAt]
+      );
+
+      // Renvoyer l'email de vérification
+      emailService.sendVerificationEmail(email, verificationCode, user.first_name).catch(err => {
+        logger.error('Erreur envoi email de vérification lors du login:', err);
+      });
+
+      logger.info(`Tentative de connexion avec compte non vérifié: ${email}`);
+
+      return res.status(403).json({ 
+        error: "Email non vérifié",
+        requiresVerification: true,
+        email: email,
+        message: "Un nouveau code de vérification a été envoyé à votre email"
+      });
     }
 
     // Générer un token JWT

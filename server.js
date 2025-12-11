@@ -6,6 +6,7 @@ const compression = require("compression");
 const rateLimit = require("express-rate-limit");
 const logger = require("./src/utils/logger");
 const db = require("./src/database/connection");
+const cleanupService = require("./src/services/cleanup.service");
 
 // Import des routes
 const authRoutes = require("./src/routes/auth.routes");
@@ -134,6 +135,9 @@ app.listen(PORT, () => {
 
   // Test de connexion à la base de données
   db.testConnection();
+
+  // Démarrer le nettoyage automatique des comptes non vérifiés
+  cleanupService.startCleanupScheduler();
 });
 
 // Gestion de l'arrêt gracieux

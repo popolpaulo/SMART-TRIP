@@ -71,6 +71,10 @@ class AmadeusService {
       maxResults = 250,
     } = searchParams;
 
+    logger.info("=== AMADEUS API REQUEST ===");
+    logger.info(`URL: ${this.baseURL}/v2/shopping/flight-offers`);
+    logger.info(`Raw searchParams: ${JSON.stringify(searchParams)}`);
+
     try {
       const token = await this.getAccessToken();
 
@@ -87,6 +91,8 @@ class AmadeusService {
       if (returnDate) {
         params.returnDate = returnDate;
       }
+
+      logger.info(`Params to send: ${JSON.stringify(params, null, 2)}`);
 
       const response = await axios.get(
         `${this.baseURL}/v2/shopping/flight-offers`,
@@ -106,10 +112,14 @@ class AmadeusService {
 
       return this.formatFlightOffers(response.data.data || []);
     } catch (error) {
-      logger.error(
-        "Amadeus flight search error:",
-        error.response?.data || error.message
-      );
+      logger.error("=== AMADEUS API ERROR ===");
+      logger.error(`Error message: ${error.message}`);
+      
+      if (error.response) {
+        logger.error(`HTTP Status: ${error.response.status}`);
+        logger.error(`Response data: ${JSON.stringify(error.response.data)}`);
+        logger.error(`Response headers: ${JSON.stringify(error.response.headers)}`);
+      }
 
       // Forcer mock si pas de clé valide OU toute erreur réseau/API
       logger.warn("Using Amadeus mock data fallback");

@@ -19,11 +19,13 @@ export default function LoginPage() {
     try {
       const result = await login(email, password);
       
-      if (result.emailNotVerified) {
-        // Rediriger vers la page de vérification
+      if (result.success) {
+        navigate('/');
+      } else if (result.requiresVerification) {
+        // Rediriger vers la page de vérification avec l'email
         navigate('/verify-email', { state: { email: result.email } });
       } else {
-        navigate('/');
+        setError(result.error || 'Échec de la connexion');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to login. Please check your credentials.');

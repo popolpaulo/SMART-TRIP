@@ -67,6 +67,15 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
 
       if (!response.ok) {
+        // Si le compte nécessite une vérification email
+        if (data.requiresVerification) {
+          return { 
+            success: false, 
+            requiresVerification: true, 
+            email: data.email,
+            error: data.message 
+          };
+        }
         throw new Error(data.error || 'Erreur lors de la connexion');
       }
 
@@ -76,11 +85,6 @@ export const AuthProvider = ({ children }) => {
       
       setUser(data.user);
       setIsAuthenticated(true);
-      
-      // Vérifier si l'email est vérifié
-      if (data.user.emailVerified === false || data.user.email_verified === false) {
-        return { success: true, emailNotVerified: true, email: data.user.email };
-      }
       
       return { success: true };
     } catch (error) {
