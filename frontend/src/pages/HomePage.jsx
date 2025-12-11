@@ -21,12 +21,16 @@ export default function HomePage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get("/api/search/trending");
-      setTrendingDestinations(response.data || []);
+      const response = await fetch("http://localhost:3000/api/search/popular-destinations");
+      if (response.ok) {
+        const data = await response.json();
+        setTrendingDestinations(data.destinations || []);
+      } else {
+        setTrendingDestinations([]);
+      }
     } catch (error) {
       console.error("Erreur lors du chargement des destinations:", error);
       setError(error.message);
-      // Utiliser des données de fallback en cas d'erreur
       setTrendingDestinations([]);
     } finally {
       setLoading(false);

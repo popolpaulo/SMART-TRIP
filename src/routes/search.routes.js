@@ -9,6 +9,9 @@ router.post('/global', optionalAuth, searchController.globalSearch);
 // Destinations tendances
 router.get('/trending', searchController.getTrendingDestinations);
 
+// Destinations populaires (basées sur les recherches réelles)
+router.get('/popular-destinations', searchController.getPopularDestinations);
+
 // Suggestions basées sur l'IA
 router.post('/suggestions', optionalAuth, searchController.getAISuggestions);
 

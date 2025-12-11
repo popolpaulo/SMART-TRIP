@@ -143,6 +143,25 @@ exports.getTrendingDestinations = async (req, res) => {
   }
 };
 
+// Destinations populaires basées sur les recherches réelles
+exports.getPopularDestinations = async (req, res) => {
+  try {
+    const { limit = 50 } = req.query;
+
+    const result = await db.query(
+      `SELECT * FROM popular_destinations 
+       ORDER BY search_count DESC 
+       LIMIT $1`,
+      [limit]
+    );
+
+    res.json({ destinations: result.rows });
+  } catch (error) {
+    logger.error("Erreur lors de la récupération des destinations populaires:", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+};
+
 // Suggestions basées sur l'IA (vols recommandés vers destinations tendances)
 exports.getAISuggestions = async (req, res) => {
   try {

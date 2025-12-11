@@ -53,6 +53,21 @@ exports.searchFlights = async (req, res) => {
 
     const results = await flightAggregator.smartSearch(user, searchParams);
 
+    // Enregistrer la recherche dans l'historique si l'utilisateur est connecté
+    if (user && user.id) {
+      try {
+        await db.query(
+          `INSERT INTO user_search_history (user_id, origin_code, destination_code, departure_date, return_date, adults, children, infants, travel_class)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [user.id, origin, destination, departureDate, returnDate, adults, children, infants, travelClass]
+        );
+        logger.info(`Search history saved for user ${user.id}`);
+      } catch (historyError) {
+        logger.error("Error saving search history:", historyError);
+        // Ne pas bloquer la recherche si l'enregistrement échoue
+      }
+    }
+
     res.json({
       success: true,
       data: results,

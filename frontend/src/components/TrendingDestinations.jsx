@@ -1,5 +1,32 @@
 import { TrendingUp, MapPin, DollarSign } from "lucide-react";
 
+// Mapping des codes aéroport vers noms de villes
+const cityNames = {
+  NYC: "New York",
+  JFK: "New York",
+  LHR: "Londres",
+  LON: "Londres",
+  HND: "Tokyo",
+  NRT: "Tokyo",
+  CDG: "Paris",
+  BCN: "Barcelone",
+  ROM: "Rome",
+  FCO: "Rome",
+  DXB: "Dubaï",
+  BKK: "Bangkok",
+  IST: "Istanbul",
+  SYD: "Sydney",
+};
+
+// Images par défaut
+const cityImages = {
+  "New York": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&h=600&fit=crop",
+  Londres: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&h=600&fit=crop",
+  Tokyo: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&h=600&fit=crop",
+  Paris: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&h=600&fit=crop",
+  Barcelone: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&h=600&fit=crop",
+};
+
 export default function TrendingDestinations({ destinations, loading }) {
   if (loading) {
     return (
@@ -13,22 +40,9 @@ export default function TrendingDestinations({ destinations, loading }) {
     );
   }
 
-  // Vérifier si nous avons des destinations
+  // Si aucune destination n'a été recherchée, ne rien afficher
   if (!destinations || destinations.length === 0) {
-    return (
-      <div className="bg-gray-50 dark:bg-gray-900 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              Aucune destination disponible
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-4">
-              Revenez bientôt pour découvrir nos destinations tendances !
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -50,101 +64,65 @@ export default function TrendingDestinations({ destinations, loading }) {
 
         {/* Grille de destinations */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {destinations.slice(0, 6).map((destination) => (
-            <div
-              key={destination.id}
-              className="group relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
-            >
-              {/* Image */}
-              <div className="relative h-48 overflow-hidden">
-                <img
-                  src={destination.image_url}
-                  alt={destination.city}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  onError={(e) => {
-                    e.target.src = `https://source.unsplash.com/800x600/?${destination.city},travel`;
-                  }}
-                />
-                {/* Overlay gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+          {destinations.slice(0, 6).map((destination, index) => {
+            const cityName = cityNames[destination.destination_code] || destination.destination_code;
+            const imageUrl = cityImages[cityName] || `https://source.unsplash.com/800x600/?${cityName},travel`;
+            
+            return (
+              <div
+                key={`${destination.destination_code}-${index}`}
+                className="group relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+              >
+                {/* Image */}
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={imageUrl}
+                    alt={cityName}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
+                  {/* Overlay gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
 
-                {/* Badge score */}
-                <div className="absolute top-4 right-4 bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-lg">
-                  <div className="flex items-center space-x-1">
-                    <TrendingUp className="h-4 w-4 text-accent-600 dark:text-accent-400" />
-                    <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                      {destination.trend_score
-                        ? Math.round(destination.trend_score)
-                        : "0"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Ville et pays */}
-                <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="text-2xl font-bold mb-1">
-                    {destination.city}
-                  </h3>
-                  <div className="flex items-center space-x-1 text-sm">
-                    <MapPin className="h-4 w-4" />
-                    <span>{destination.country_name}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Informations */}
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">À partir de</p>
-                    <div className="flex items-baseline space-x-1">
-                      <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                        {destination.min_price || destination.average_price
-                          ? Math.round(
-                              destination.min_price || destination.average_price
-                            )
-                          : "0"}
-                        €
-                      </span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">/ pers</span>
+                  {/* Badge ranking */}
+                  {index < 3 && (
+                    <div className="absolute top-4 right-4 bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-full shadow-lg">
+                      <span className="text-sm font-bold">#{index + 1}</span>
                     </div>
-                    {/* Afficher disclaimer si prix non mis à jour */}
-                    {!destination.min_price && destination.average_price && (
-                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                        Prix indicatif
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Recherches</p>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      {destination.search_count
-                        ? destination.search_count.toLocaleString()
-                        : "0"}
-                    </p>
+                  )}
+
+                  {/* Ville */}
+                  <div className="absolute bottom-4 left-4 text-white">
+                    <h3 className="text-2xl font-bold mb-1">{cityName}</h3>
+                    <div className="flex items-center space-x-1 text-sm">
+                      <MapPin className="h-4 w-4" />
+                      <span>{destination.destination_code}</span>
+                    </div>
                   </div>
                 </div>
 
-                {destination.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                    {destination.description}
-                  </p>
-                )}
+                {/* Informations */}
+                <div className="p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Recherches</p>
+                      <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+                        {destination.search_count || 0}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Cette semaine</p>
+                      <TrendingUp className="h-6 w-6 text-green-500 mx-auto" />
+                    </div>
+                  </div>
 
-                {/* Bouton */}
-                <button className="w-full mt-4 btn btn-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                  Voir les vols
-                </button>
+                  {/* Bouton */}
+                  <button className="w-full mt-4 btn btn-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                    Voir les vols
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Bouton voir plus */}
-        <div className="text-center mt-12">
-          <button className="btn btn-secondary px-8">
-            Voir toutes les destinations
-          </button>
+            );
+          })}
         </div>
       </div>
     </div>
