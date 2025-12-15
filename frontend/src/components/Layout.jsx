@@ -16,12 +16,20 @@ export default function Layout({ children }) {
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link to="/home" className="flex items-center space-x-2">
-              <Plane className="h-8 w-8 text-primary-600" />
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                SMART <span className="text-primary-600">TRIP</span>
-              </span>
-            </Link>
+            <div className="flex items-center space-x-2">
+              <Link
+                to="/"
+                className="hover:opacity-80 transition-opacity"
+                title="Retour au globe"
+              >
+                <Plane className="h-8 w-8 text-primary-600" />
+              </Link>
+              <Link to="/home">
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                  SMART <span className="text-primary-600">TRIP</span>
+                </span>
+              </Link>
+            </div>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">

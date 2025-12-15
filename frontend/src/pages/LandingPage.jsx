@@ -1,35 +1,34 @@
-import React, { Suspense, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { useNavigate } from 'react-router-dom';
-import { Sparkles, Brain, ArrowRight, Search } from 'lucide-react';
-import Globe3D from '../components/Globe3D';
-import { CITY_NAMES } from '../utils/destinations';
+import React, { Suspense, useState } from "react";
+import { Canvas } from "@react-three/fiber";
+import { useNavigate } from "react-router-dom";
+import { Sparkles, Brain, ArrowRight, Search } from "lucide-react";
+import Globe3D from "../components/Globe3D";
+import { CITY_NAMES } from "../utils/destinations";
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [selectedCountry, setSelectedCountry] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [zoomToDestination, setZoomToDestination] = useState(null);
   const [isInspirationMode, setIsInspirationMode] = useState(false);
   const [showInspirationModal, setShowInspirationModal] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [inspirationCriteria, setInspirationCriteria] = useState({
-    weather: '',
-    temperature: '',
-    budget: '',
-    activities: []
+    weather: "",
+    temperature: "",
+    budget: "",
+    activities: [],
   });
 
   const handleCountryClick = (countryName) => {
     setSelectedCountry(countryName);
-    // Rediriger vers la page de recherche avec le pays sélectionné
-    setTimeout(() => {
-      navigate('/home', { state: { destination: countryName } });
-    }, 500);
+    setZoomToDestination(countryName);
+    setSearchQuery(countryName);
   };
 
   const handleExplore = () => {
-    navigate('/home');
+    navigate("/home");
   };
 
   const handleSearchSelect = (destination) => {
@@ -39,8 +38,19 @@ const LandingPage = () => {
   };
 
   const handleZoomComplete = () => {
-    // Rediriger après le zoom
-    navigate('/home', { state: { destination: searchQuery } });
+    // Afficher la modale de confirmation au lieu de rediriger directement
+    setShowConfirmationModal(true);
+  };
+
+  const handleConfirmNavigation = () => {
+    navigate("/home", { state: { destination: searchQuery } });
+  };
+
+  const handleCancelNavigation = () => {
+    setShowConfirmationModal(false);
+    setZoomToDestination(null);
+    setSearchQuery("");
+    setSelectedCountry(null);
   };
 
   const handleInspirationMode = () => {
@@ -50,17 +60,17 @@ const LandingPage = () => {
   const handleInspirationSubmit = async () => {
     setShowInspirationModal(false);
     setIsInspirationMode(true);
-    
+
     try {
       // Appel API avec les critères météo
-      const response = await fetch('http://localhost:3000/api/inspiration', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(inspirationCriteria)
+      const response = await fetch("http://localhost:3000/api/inspiration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(inspirationCriteria),
       });
 
       const data = await response.json();
-      
+
       if (data.success && data.destinations.length > 0) {
         // Sélectionner la première destination suggérée
         const suggestedCity = data.destinations[0].city;
@@ -68,14 +78,16 @@ const LandingPage = () => {
         setZoomToDestination(suggestedCity);
       } else {
         // Fallback si aucune destination trouvée
-        const randomDestination = CITY_NAMES[Math.floor(Math.random() * CITY_NAMES.length)];
+        const randomDestination =
+          CITY_NAMES[Math.floor(Math.random() * CITY_NAMES.length)];
         setSearchQuery(randomDestination);
         setZoomToDestination(randomDestination);
       }
     } catch (error) {
-      console.error('Erreur API inspiration:', error);
+      console.error("Erreur API inspiration:", error);
       // Fallback en cas d'erreur
-      const randomDestination = CITY_NAMES[Math.floor(Math.random() * CITY_NAMES.length)];
+      const randomDestination =
+        CITY_NAMES[Math.floor(Math.random() * CITY_NAMES.length)];
       setSearchQuery(randomDestination);
       setZoomToDestination(randomDestination);
     } finally {
@@ -83,7 +95,7 @@ const LandingPage = () => {
     }
   };
 
-  const filteredDestinations = CITY_NAMES.filter(dest =>
+  const filteredDestinations = CITY_NAMES.filter((dest) =>
     dest.toLowerCase().includes(searchQuery.toLowerCase())
   ).slice(0, 5);
 
@@ -93,10 +105,14 @@ const LandingPage = () => {
       <div className="absolute inset-0 z-0">
         <Canvas
           camera={{ position: [0, 0, 8], fov: 50 }}
-          gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+          gl={{
+            antialias: true,
+            alpha: true,
+            powerPreference: "high-performance",
+          }}
         >
           <Suspense fallback={null}>
-            <Globe3D 
+            <Globe3D
               onCountryClick={handleCountryClick}
               zoomToDestination={zoomToDestination}
               onZoomComplete={handleZoomComplete}
@@ -108,7 +124,9 @@ const LandingPage = () => {
       {/* Notification de sélection de pays */}
       {selectedCountry && (
         <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-30 bg-primary-600 text-white px-6 py-3 rounded-full shadow-2xl animate-bounce">
-          <span className="font-semibold">🌍 {selectedCountry} sélectionné !</span>
+          <span className="font-semibold">
+            🌍 {selectedCountry} sélectionné !
+          </span>
         </div>
       )}
 
@@ -122,11 +140,13 @@ const LandingPage = () => {
             <Sparkles className="h-8 w-8 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">SMART TRIP</h1>
+            <h1 className="text-3xl font-bold text-white tracking-tight">
+              SMART TRIP
+            </h1>
             <p className="text-sm text-gray-300 tracking-wide">Powered by AI</p>
           </div>
         </div>
-        
+
         {/* Stats déplacées ici */}
         <div className="flex gap-6">
           <div className="text-left space-y-1">
@@ -149,19 +169,24 @@ const LandingPage = () => {
         <div className="space-y-4">
           {/* Slogan */}
           <p className="text-gray-300 text-sm font-light italic text-right">
-            "Voyagez intelligent, <span className="text-primary-400 font-semibold">voyagez avec nous"</span>
+            "Voyagez intelligent,{" "}
+            <span className="text-primary-400 font-semibold">
+              voyagez avec nous"
+            </span>
           </p>
-          
+
           {/* Bouton Mode Inspiration */}
           <button
             onClick={handleInspirationMode}
             disabled={isInspirationMode}
             className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            <Brain className={`h-5 w-5 ${isInspirationMode ? 'animate-spin' : ''}`} />
+            <Brain
+              className={`h-5 w-5 ${isInspirationMode ? "animate-spin" : ""}`}
+            />
             <span>Mode Inspiration</span>
           </button>
-          
+
           {/* Barre de recherche avec suggestions */}
           <div className="relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
@@ -203,7 +228,7 @@ const LandingPage = () => {
           >
             <span>Commencer l'exploration</span>
             <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
-            
+
             {/* Effet de brillance */}
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           </button>
@@ -226,11 +251,12 @@ const LandingPage = () => {
                 ✕
               </button>
             </div>
-            
+
             <p className="text-gray-400 text-sm mb-6">
-              Décrivez vos préférences et laissez l'IA vous suggérer la destination parfaite
+              Décrivez vos préférences et laissez l'IA vous suggérer la
+              destination parfaite
             </p>
-            
+
             <div className="space-y-4">
               {/* Météo préférée */}
               <div>
@@ -239,7 +265,12 @@ const LandingPage = () => {
                 </label>
                 <select
                   value={inspirationCriteria.weather}
-                  onChange={(e) => setInspirationCriteria({...inspirationCriteria, weather: e.target.value})}
+                  onChange={(e) =>
+                    setInspirationCriteria({
+                      ...inspirationCriteria,
+                      weather: e.target.value,
+                    })
+                  }
                   className="w-full px-4 py-2 bg-gray-800 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">Peu importe</option>
@@ -248,7 +279,7 @@ const LandingPage = () => {
                   <option value="cold">Froid ❄️</option>
                 </select>
               </div>
-              
+
               {/* Température */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -256,7 +287,12 @@ const LandingPage = () => {
                 </label>
                 <select
                   value={inspirationCriteria.temperature}
-                  onChange={(e) => setInspirationCriteria({...inspirationCriteria, temperature: e.target.value})}
+                  onChange={(e) =>
+                    setInspirationCriteria({
+                      ...inspirationCriteria,
+                      temperature: e.target.value,
+                    })
+                  }
                   className="w-full px-4 py-2 bg-gray-800 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">Peu importe</option>
@@ -266,7 +302,7 @@ const LandingPage = () => {
                   <option value="cold">Froid (-5°C)</option>
                 </select>
               </div>
-              
+
               {/* Budget */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -274,7 +310,12 @@ const LandingPage = () => {
                 </label>
                 <select
                   value={inspirationCriteria.budget}
-                  onChange={(e) => setInspirationCriteria({...inspirationCriteria, budget: e.target.value})}
+                  onChange={(e) =>
+                    setInspirationCriteria({
+                      ...inspirationCriteria,
+                      budget: e.target.value,
+                    })
+                  }
                   className="w-full px-4 py-2 bg-gray-800 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">Peu importe</option>
@@ -283,26 +324,39 @@ const LandingPage = () => {
                   <option value="high">Luxe 💎</option>
                 </select>
               </div>
-              
+
               {/* Type d'activités */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Type d'activités
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  {['Plage', 'Culture', 'Aventure', 'Gastronomie', 'Nature', 'Shopping'].map(activity => (
+                  {[
+                    "Plage",
+                    "Culture",
+                    "Aventure",
+                    "Gastronomie",
+                    "Nature",
+                    "Shopping",
+                  ].map((activity) => (
                     <button
                       key={activity}
                       onClick={() => {
-                        const activities = inspirationCriteria.activities.includes(activity)
-                          ? inspirationCriteria.activities.filter(a => a !== activity)
-                          : [...inspirationCriteria.activities, activity];
-                        setInspirationCriteria({...inspirationCriteria, activities});
+                        const activities =
+                          inspirationCriteria.activities.includes(activity)
+                            ? inspirationCriteria.activities.filter(
+                                (a) => a !== activity
+                              )
+                            : [...inspirationCriteria.activities, activity];
+                        setInspirationCriteria({
+                          ...inspirationCriteria,
+                          activities,
+                        });
                       }}
                       className={`px-3 py-2 rounded-lg text-sm transition-all ${
                         inspirationCriteria.activities.includes(activity)
-                          ? 'bg-primary-600 text-white'
-                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                          ? "bg-primary-600 text-white"
+                          : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                       }`}
                     >
                       {activity}
@@ -311,7 +365,7 @@ const LandingPage = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-6 flex gap-3">
               <button
                 onClick={() => setShowInspirationModal(false)}
@@ -324,6 +378,48 @@ const LandingPage = () => {
                 className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-lg transition-all transform hover:scale-105"
               >
                 Trouver ma destination
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmation de navigation */}
+      {showConfirmationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-gray-900 border border-white/20 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl transform transition-all scale-100">
+            <div className="text-center mb-6">
+              <div className="mx-auto w-16 h-16 bg-primary-600/20 rounded-full flex items-center justify-center mb-4">
+                <Sparkles className="h-8 w-8 text-primary-500" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Destination trouvée !
+              </h2>
+              <p className="text-gray-300">
+                Vous avez sélectionné{" "}
+                <span className="font-bold text-primary-400">
+                  {searchQuery}
+                </span>
+                . Souhaitez-vous voir les vols disponibles pour cette
+                destination ?
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleConfirmNavigation}
+                className="w-full px-6 py-3 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all transform hover:scale-105 flex items-center justify-center gap-2"
+              >
+                <span>Voir les vols disponibles</span>
+                <ArrowRight className="h-5 w-5" />
+              </button>
+
+              <button
+                onClick={handleCancelNavigation}
+                className="w-full px-6 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+              >
+                <Search className="h-4 w-4" />
+                <span>Faire une autre recherche</span>
               </button>
             </div>
           </div>

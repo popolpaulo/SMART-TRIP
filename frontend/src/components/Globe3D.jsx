@@ -1,11 +1,76 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { useFrame, useLoader, useThree } from '@react-three/fiber';
-import { OrbitControls, Stars } from '@react-three/drei';
-import { TextureLoader, Raycaster, Vector2 } from 'three';
-import * as THREE from 'three';
-import { DESTINATIONS } from '../utils/destinations';
+import React, { useRef, useState, useEffect } from "react";
+import { useFrame, useLoader, useThree } from "@react-three/fiber";
+import { OrbitControls, Stars } from "@react-three/drei";
+import { TextureLoader, Raycaster, Vector2 } from "three";
+import * as THREE from "three";
+import { DESTINATIONS } from "../utils/destinations";
 
-const Globe3D = ({ onCountryClick, inspirationMode = false, zoomToDestination = null, onZoomComplete }) => {
+const DestinationMarker = ({ position, isSelected }) => {
+  const ringRef = useRef();
+
+  useFrame(({ clock }) => {
+    if (isSelected && ringRef.current) {
+      const t = clock.getElapsedTime();
+      const scale = 1 + Math.sin(t * 3) * 0.2;
+      const opacity = 0.8 - Math.sin(t * 3) * 0.2;
+      ringRef.current.scale.set(scale, scale, 1);
+      ringRef.current.material.opacity = opacity;
+    }
+  });
+
+  if (!isSelected) return null;
+
+  const normal = position.clone().normalize();
+  const quaternion = new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0, 0, 1),
+    normal
+  );
+
+  return (
+    <group position={position} quaternion={quaternion}>
+      {/* Anneau pulsant sur la surface */}
+      <mesh ref={ringRef} position={[0, 0, 0.02]}>
+        <ringGeometry args={[0.03, 0.08, 32]} />
+        <meshBasicMaterial
+          color="#ec4899"
+          transparent
+          opacity={0.6}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Point central blanc */}
+      <mesh position={[0, 0, 0.03]}>
+        <circleGeometry args={[0.02, 32]} />
+        <meshBasicMaterial color="#ffffff" />
+      </mesh>
+
+      {/* Tige fine */}
+      <mesh position={[0, 0, 0.12]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.002, 0.002, 0.24, 8]} />
+        <meshBasicMaterial color="#ec4899" transparent opacity={0.8} />
+      </mesh>
+
+      {/* Tête de l'épingle */}
+      <mesh position={[0, 0, 0.24]}>
+        <sphereGeometry args={[0.03, 16, 16]} />
+        <meshStandardMaterial
+          color="#ec4899"
+          emissive="#ec4899"
+          emissiveIntensity={2}
+          toneMapped={false}
+        />
+      </mesh>
+    </group>
+  );
+};
+
+const Globe3D = ({
+  onCountryClick,
+  inspirationMode = false,
+  zoomToDestination = null,
+  onZoomComplete,
+}) => {
   const globeGroupRef = useRef(); // Groupe qui contient le globe ET les marqueurs
   const meshRef = useRef();
   const cloudsRef = useRef();
@@ -14,10 +79,17 @@ const Globe3D = ({ onCountryClick, inspirationMode = false, zoomToDestination = 
   const [hoveredMarker, setHoveredMarker] = useState(null);
   const [isZooming, setIsZooming] = useState(false);
   const [zoomAnimation, setZoomAnimation] = useState(null);
+  const lastZoomedDestinationRef = useRef(null);
 
   // Charger la texture de la Terre
-  const earthTexture = useLoader(TextureLoader, 'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg');
-  const bumpTexture = useLoader(TextureLoader, 'https://unpkg.com/three-globe/example/img/earth-topology.png');
+  const earthTexture = useLoader(
+    TextureLoader,
+    "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+  );
+  const bumpTexture = useLoader(
+    TextureLoader,
+    "https://unpkg.com/three-globe/example/img/earth-topology.png"
+  );
 
   // Convertir lat/lon en position 3D
   const latLonToVector3 = (lat, lon, radius = 2.55) => {
@@ -37,15 +109,15 @@ const Globe3D = ({ onCountryClick, inspirationMode = false, zoomToDestination = 
       (event.clientX / window.innerWidth) * 2 - 1,
       -(event.clientY / window.innerHeight) * 2 + 1
     );
-    
+
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(markersRef.current);
-    
+
     if (intersects.length > 0) {
-      document.body.style.cursor = 'pointer';
+      document.body.style.cursor = "pointer";
       setHoveredMarker(intersects[0].object.userData.name);
     } else {
-      document.body.style.cursor = 'grab';
+      document.body.style.cursor = "grab";
       setHoveredMarker(null);
     }
   };
@@ -56,10 +128,10 @@ const Globe3D = ({ onCountryClick, inspirationMode = false, zoomToDestination = 
       (event.clientX / window.innerWidth) * 2 - 1,
       -(event.clientY / window.innerHeight) * 2 + 1
     );
-    
+
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(markersRef.current);
-    
+
     if (intersects.length > 0 && onCountryClick) {
       onCountryClick(intersects[0].object.userData.city);
     }
@@ -67,52 +139,59 @@ const Globe3D = ({ onCountryClick, inspirationMode = false, zoomToDestination = 
 
   // Démarrer l'animation de zoom quand une destination est sélectionnée
   React.useEffect(() => {
-    if (zoomToDestination && !isZooming && globeGroupRef.current) {
-      const destination = DESTINATIONS.find(d => 
-        d.city.toLowerCase() === zoomToDestination.toLowerCase()
-      );
-      
-      if (destination) {
-        setIsZooming(true);
-        
-        // Trouver le marqueur correspondant à cette destination
-        const markerIndex = DESTINATIONS.findIndex(d => 
-          d.city.toLowerCase() === zoomToDestination.toLowerCase()
+    // Si la destination change ou si on annule la recherche
+    if (zoomToDestination !== lastZoomedDestinationRef.current) {
+      if (zoomToDestination && globeGroupRef.current) {
+        const destination = DESTINATIONS.find(
+          (d) => d.city.toLowerCase() === zoomToDestination.toLowerCase()
         );
-        
-        const targetMarker = markersRef.current[markerIndex];
-        
-        if (targetMarker) {
-          // Position initiale de la caméra
-          const startCameraPos = camera.position.clone();
-          
-          // Obtenir la position mondiale du marqueur (en tenant compte de la rotation du globe)
-          const markerWorldPos = new THREE.Vector3();
-          targetMarker.getWorldPosition(markerWorldPos);
-          
-          // Calculer la direction depuis le centre du globe vers le marqueur
-          const direction = markerWorldPos.clone().normalize();
-          
-          // Position cible de la caméra : en face du marqueur à distance de zoom
-          const zoomDistance = 4.5;
-          const targetCameraPos = direction.clone().multiplyScalar(zoomDistance);
-          
-          console.log('Zoom vers:', destination.city);
-          console.log('Position du marqueur:', markerWorldPos);
-          console.log('Position cible caméra:', targetCameraPos);
-          
-          setZoomAnimation({
-            startTime: Date.now(),
-            duration: 2500,
-            startCameraPos,
-            targetCameraPos,
-            startGlobeRotation: null, // Pas de rotation du globe, on bouge juste la caméra
-            targetGlobeRotation: null
-          });
+
+        if (destination) {
+          setIsZooming(true);
+          lastZoomedDestinationRef.current = zoomToDestination;
+
+          // Trouver le marqueur correspondant à cette destination
+          const markerIndex = DESTINATIONS.findIndex(
+            (d) => d.city.toLowerCase() === zoomToDestination.toLowerCase()
+          );
+
+          const targetMarker = markersRef.current[markerIndex];
+
+          if (targetMarker) {
+            // Position initiale de la caméra
+            const startCameraPos = camera.position.clone();
+
+            // Obtenir la position mondiale du marqueur (en tenant compte de la rotation du globe)
+            const markerWorldPos = new THREE.Vector3();
+            targetMarker.getWorldPosition(markerWorldPos);
+
+            // Calculer la direction depuis le centre du globe vers le marqueur
+            const direction = markerWorldPos.clone().normalize();
+
+            // Position cible de la caméra : en face du marqueur à distance de zoom
+            const zoomDistance = 4.5;
+            const targetCameraPos = direction
+              .clone()
+              .multiplyScalar(zoomDistance);
+
+            setZoomAnimation({
+              startTime: Date.now(),
+              duration: 2500,
+              startCameraPos,
+              targetCameraPos,
+              startGlobeRotation: null,
+              targetGlobeRotation: null,
+            });
+          }
         }
+      } else if (!zoomToDestination) {
+        // Réinitialisation si aucune destination
+        setIsZooming(false);
+        setZoomAnimation(null);
+        lastZoomedDestinationRef.current = null;
       }
     }
-  }, [zoomToDestination, isZooming, camera]);
+  }, [zoomToDestination, camera]);
 
   // Animation de rotation automatique et zoom
   useFrame((state, delta) => {
@@ -128,20 +207,21 @@ const Globe3D = ({ onCountryClick, inspirationMode = false, zoomToDestination = 
     if (zoomAnimation && globeGroupRef.current) {
       const elapsed = Date.now() - zoomAnimation.startTime;
       const progress = Math.min(elapsed / zoomAnimation.duration, 1);
-      
+
       // Easing function (ease-in-out)
-      const eased = progress < 0.5 
-        ? 2 * progress * progress 
-        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-      
+      const eased =
+        progress < 0.5
+          ? 2 * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
       // Animer le zoom de la caméra vers le marqueur
       camera.position.lerpVectors(
-        zoomAnimation.startCameraPos, 
-        zoomAnimation.targetCameraPos, 
+        zoomAnimation.startCameraPos,
+        zoomAnimation.targetCameraPos,
         eased
       );
       camera.lookAt(0, 0, 0);
-      
+
       // Fin de l'animation
       if (progress >= 1) {
         setZoomAnimation(null);
@@ -167,42 +247,55 @@ const Globe3D = ({ onCountryClick, inspirationMode = false, zoomToDestination = 
 
       {/* Lumière ambiante augmentée pour éclaircir le globe */}
       <ambientLight intensity={0.9} />
-      
+
       {/* Lumière directionnelle (soleil) plus intense */}
       <directionalLight position={[5, 3, 5]} intensity={2.5} />
-      
+
       {/* Point de lumière supplémentaire */}
       <pointLight position={[-10, 0, -10]} intensity={1.2} color="#4080ff" />
 
       {/* Groupe contenant le globe et les marqueurs - tourne ensemble */}
       <group ref={globeGroupRef}>
         {/* Globe terrestre avec texture satellite */}
-        <mesh ref={meshRef} onPointerMove={handlePointerMove} onClick={handleClick}>
+        <mesh
+          ref={meshRef}
+          onPointerMove={handlePointerMove}
+          onClick={handleClick}
+        >
           <sphereGeometry args={[2.5, 64, 64]} />
-          <meshStandardMaterial 
+          <meshStandardMaterial
             map={earthTexture}
             bumpMap={bumpTexture}
             bumpScale={0.05}
           />
         </mesh>
 
-        {/* Marqueurs invisibles pour les destinations - servent de repères pour le zoom */}
+        {/* Marqueurs pour les destinations */}
         {DESTINATIONS.map((dest, index) => {
           const position = latLonToVector3(dest.lat, dest.lon);
+          const isSelected =
+            zoomToDestination &&
+            dest.city.toLowerCase() === zoomToDestination.toLowerCase();
+
           return (
-            <mesh
-              key={index}
-              position={position}
-              ref={(el) => (markersRef.current[index] = el)}
-              userData={{ country: dest.country, city: dest.city }}
-            >
-              <sphereGeometry args={[0.01, 8, 8]} />
-              <meshBasicMaterial 
-                transparent
-                opacity={0}
-                visible={false}
-              />
-            </mesh>
+            <group key={index}>
+              {/* Marqueur logique pour le raycasting et le zoom */}
+              <mesh
+                position={position}
+                ref={(el) => (markersRef.current[index] = el)}
+                userData={{ country: dest.country, city: dest.city }}
+              >
+                <sphereGeometry args={[0.05, 8, 8]} />
+                <meshBasicMaterial
+                  transparent
+                  opacity={0}
+                  visible={false} // Invisible par défaut
+                />
+              </mesh>
+
+              {/* Marqueur visuel personnalisé */}
+              <DestinationMarker position={position} isSelected={isSelected} />
+            </group>
           );
         })}
 
