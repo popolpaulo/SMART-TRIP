@@ -43,14 +43,15 @@ const getCurrentWeather = async (lat, lon) => {
  * @returns {Promise<Array>} Destinations filtrées
  */
 const filterDestinationsByWeather = async (destinations, criteria) => {
-  // Limiter à 30 destinations pour ne pas dépasser les limites API
-  const sample = destinations.sort(() => 0.5 - Math.random()).slice(0, 30);
+  // Limiter à 50 destinations pour obtenir plus de variété
+  const sample = destinations.sort(() => 0.5 - Math.random()).slice(0, 50);
   
   const weatherPromises = sample.map(async (dest) => {
     try {
       const weather = await getCurrentWeather(dest.lat, dest.lon);
       return { ...dest, weather };
     } catch (error) {
+      console.error(`Erreur météo pour ${dest.city}:`, error.message);
       return null;
     }
   });
@@ -58,28 +59,33 @@ const filterDestinationsByWeather = async (destinations, criteria) => {
   const destinationsWithWeather = (await Promise.all(weatherPromises))
     .filter(d => d !== null);
 
-  // Filtrer selon les critères
+  // Si aucun critère, retourner toutes les destinations
+  if (!criteria.weather && !criteria.temperature) {
+    return destinationsWithWeather;
+  }
+
+  // Filtrer selon les critères (avec logique plus permissive)
   return destinationsWithWeather.filter(dest => {
     const { weather } = dest;
     
     // Filtre météo (sunny, mild, cold)
     if (criteria.weather) {
-      if (criteria.weather === 'sunny' && !['Clear'].includes(weather.weatherType)) {
+      if (criteria.weather === 'sunny' && !['Clear', 'Clouds'].includes(weather.weatherType)) {
         return false;
       }
       if (criteria.weather === 'mild' && ['Rain', 'Snow', 'Thunderstorm'].includes(weather.weatherType)) {
         return false;
       }
-      if (criteria.weather === 'cold' && weather.temperature > 10) {
+      if (criteria.weather === 'cold' && weather.temperature > 15) {
         return false;
       }
     }
 
-    // Filtre température
+    // Filtre température (priorité sur le filtre météo si les deux sont définis)
     if (criteria.temperature) {
       if (criteria.temperature === 'hot' && weather.temperature < 25) return false;
-      if (criteria.temperature === 'warm' && (weather.temperature < 15 || weather.temperature > 25)) return false;
-      if (criteria.temperature === 'cool' && (weather.temperature < 5 || weather.temperature > 15)) return false;
+      if (criteria.temperature === 'warm' && (weather.temperature < 15 || weather.temperature > 28)) return false;
+      if (criteria.temperature === 'cool' && (weather.temperature < 5 || weather.temperature > 18)) return false;
       if (criteria.temperature === 'cold' && weather.temperature > 5) return false;
     }
 
