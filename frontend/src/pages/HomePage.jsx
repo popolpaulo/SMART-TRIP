@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { Sparkles, TrendingUp, Brain, Zap, Target } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Sparkles, TrendingUp, Brain, Zap, Target, Globe } from "lucide-react";
 import api from "../utils/api";
 import FlightSearchForm from "../components/FlightSearchForm";
 import TrendingDestinations from "../components/TrendingDestinations";
@@ -8,6 +8,7 @@ import FeaturesSection from "../components/FeaturesSection";
 
 export default function HomePage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const selectedDestination = location.state?.destination || null;
   const [trendingDestinations, setTrendingDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,8 +53,15 @@ export default function HomePage() {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-          {/* Badge */}
-          <div className="flex justify-center mb-8">
+          {/* Badge et bouton Globe */}
+          <div className="flex flex-col md:flex-row justify-center items-center gap-4 mb-8">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30 transition-all hover:scale-105"
+            >
+              <Globe className="h-5 w-5 text-blue-300" />
+              <span className="text-sm font-semibold">Globe 3D</span>
+            </button>
             <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 backdrop-blur-sm px-4 py-2 rounded-full border border-purple-400/30">
               <Brain className="h-5 w-5 text-purple-300" />
               <span className="text-sm font-semibold">
